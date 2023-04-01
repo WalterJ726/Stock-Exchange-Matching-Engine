@@ -1,4 +1,4 @@
-#include <bits/stdc++.h>
+#include "Server.hpp"
 
 
 int main()
@@ -7,6 +7,17 @@ int main()
     //     std::cout<<"error\n"<<std::endl;
     //     exit(-1);
     // }
-    
+    Server* server_daemon = nullptr;
+    try
+    {
+        server_daemon = new Server(12345);
+        server_daemon->startRun(); 
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        std::cout << "fail to initialize server" << std::endl;
+    }
+    delete server_daemon;
     return EXIT_SUCCESS;
 }
