@@ -2,7 +2,8 @@
 #include <pqxx/pqxx>
 #include <string>
 
-using pqxx::connection;
+// using pqxx::connection;
+using namespace pqxx;
 using std::string;
 
 #ifndef _QUERY_FUNCS_
@@ -25,6 +26,9 @@ class Database {
   //drop tables if already exist, and create tables
   void initialize();
 
+  // insert value to database
+  bool insert_account(const string& account_id, const size_t& balance);
+  bool insert_sym(const string& account_id, const string& sym, const size_t& num);
   // ~Database();
 };
 

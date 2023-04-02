@@ -130,6 +130,87 @@ void Database::initialize() {
   createTables(this->c);
 }
 
+bool Database::insert_account(const string& account_id, const size_t& balance){
+  string sql = "SELECT account_id FROM account WHERE account_id=" + account_id + ";";
+  std::cout << sql << std::endl;
+  try
+  {
+      nontransaction N(*c);
+      /* Execute SQL query */
+      result R( N.exec( sql ));
+      if (R.begin() != R.end()){
+        // account already exists
+        return false;
+      }
+      // add try block to destruct nontransaction
+  }
+  catch(const std::exception& e)
+  {
+    std::cerr << e.what() << '\n';
+  }
+    
+    sql = "INSERT INTO account (account_id, balance) ";
+    sql += string("VALUES (");
+    sql += account_id + ",";
+    sql += std::to_string(balance);
+    sql += string("); ");
+    std::cout << "start to execute sql" << std::endl;
+    try
+    {
+      executeSQL(c, sql);
+    }
+    catch(const std::exception& e)
+    {
+      std::cerr << e.what() << '\n';
+    }
+    std::cout << "finished executing sql" << std::endl;
+    return true;
+}
+
+bool Database::insert_sym(const string& account_id, const string& sym, const size_t& num){
+    string sql = "SELECT amount FROM account, position WHERE account_id=owner_id";
+    sql += " AND account_id=" + account_id;
+    sql += " AND symbol=" + c->quote(sym) + ";";
+    try
+    {
+        nontransaction N(*c);
+        /* Execute SQL query */
+        result R( N.exec( sql ));
+        if (R.begin() != R.end()){
+          // update value
+          result::const_iterator c = R.begin();
+          std::cout << "UPDATE VALUE IN POSITION" << std::endl;
+          int new_amount = c[0].as<int>() + num;
+          sql = "UPDATE position ";
+          sql += "SET ";
+          sql += "amount=" + std::to_string(new_amount);
+          sql += string(";");
+        } else {
+          // insert new value
+            sql = "INSERT INTO position (symbol, amount, owner_id) ";
+            sql += string("VALUES (");
+            sql += c->quote(sym) + ",";
+            sql += std::to_string(num) + ",";
+            sql += account_id;
+            sql += string("); ");
+
+        }
+    }
+    catch(const std::exception& e)
+    {
+      std::cerr << e.what() << '\n';
+    }
+    std::cout << sql << std::endl;
+    try
+    {
+      executeSQL(c, sql);
+    }
+    catch(const std::exception& e)
+    {
+      std::cerr << e.what() << '\n';
+    }
+    return true;
+}
 // Database::~Database() {
 //   if (this->c != NULL) {
 //     c->disconnect();

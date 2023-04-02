@@ -18,7 +18,7 @@ void Server::startRun(){
 
 }
 
-void Server::handleRequest(int client_connection_fd, const Database& db){
+void Server::handleRequest(const int& client_connection_fd, Database db){
     std::vector<char> buff(MAX_TCP_PACKET_SIZE);
     // recv data
     size_t numbytes = recv(client_connection_fd, &buff.data()[0], MAX_TCP_PACKET_SIZE, 0);
@@ -26,10 +26,10 @@ void Server::handleRequest(int client_connection_fd, const Database& db){
     // get length of xml
     std::string xml_len;
     for (size_t i = 0; i < buff.size(); i ++ ){
-        if (isdigit(buff[i])){
-            xml_len += buff[i];
-        } else {
+        if (buff[i] == '\n'){
             break;
+        } else {
+            xml_len += buff[i];
         }
     }
 
@@ -70,17 +70,72 @@ void Server::handleRequest(int client_connection_fd, const Database& db){
     pugi::xml_node root = doc.document_element();
     std::string root_name = root.name();
 
+    pugi::xml_document response_raw;
     if (root_name == "create"){
         std::cout << "start to process create" << std::endl;
+        response_raw = process_create(doc, client_connection_fd, db);
     } else if (root_name == "transactions"){
         std::cout << "start to process transactions" << std::endl;
 
     } else {
         std::cout << "wrong xml" << std::endl;
     }
+    // send reponse back
+    response_raw.print(std::cout);
     close(client_connection_fd);
 }
 
+pugi::xml_document Server::process_create(const pugi::xml_document& doc, const int& client_connection_fd, Database db){
+    pugi::xml_document response;
+    pugi::xml_node result_node = response.append_child("results");
+    pugi::xml_node root = doc.document_element();
+    for (pugi::xml_node cur = root.first_child(); cur; cur = cur.next_sibling()){
+      if (std::string(cur.name()) == "account"){
+            // TODO: id and balance is not valid and add error msg
+            std::cout << "start to process creating account" << std::endl;
+            std::string account_id = cur.attribute("id").value();
+            std::string balance_raw = cur.attribute("balance").value();
+            size_t balance = std::stoul(balance_raw);
+            
+            if (db.insert_account(account_id, balance)){
+                pugi::xml_node created_account_child = result_node.append_child("created");
+                created_account_child.append_attribute("id") = account_id.c_str(); 
+            } else {
+                pugi::xml_node invalid_account_child = result_node.append_child("error");
+                invalid_account_child.append_attribute("id") = account_id.c_str();
+                invalid_account_child.append_child(pugi::node_pcdata).set_value("Account already exists");
+            }
+      } else if (std::string(cur.name()) == "symbol"){
+            // TODO: sym is not valid and add error msg
+            // TODO: the indent of error msg
+            std::cout << "start to process creating symbol" << std::endl;
+            std::string sym = cur.attribute("sym").value();
+            for (pugi::xml_node sym_create = cur.first_child(); sym_create; sym_create = sym_create.next_sibling()){
+                std::string account_id = sym_create.attribute("id").value();
+                std::string num_raw = sym_create.child_value();
+                size_t num = std::stoul(num_raw);
+                if (db.insert_sym(account_id, sym, num)){
+                  pugi::xml_node created_account_child = result_node.append_child("created");
+                  created_account_child.append_attribute("sym") = sym.c_str(); 
+                  created_account_child.append_attribute("id") = account_id.c_str(); 
+                } else {
+                  // TODO: Will this function produce error?
+                  std::cout << "Will this function produce error" << std::endl;
+                }
+            }
+      } else {
+        pugi::xml_node error_child = result_node.append_child("error");
+        error_child.append_child(pugi::node_pcdata).set_value("invalid child name");
+        std::cout << "bad child in create" << std::endl;
+        // throw std::exception();
+      }
+  }
+  return response;
+}
+
+pugi::xml_document Server::proces_transactions(const pugi::xml_document& doc, const int& client_connection_fd, Database db){
+  
+}
 
 Server::Server(int port_num) : port_num(port_num) {
   hasError = 0;
