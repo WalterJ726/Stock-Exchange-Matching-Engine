@@ -25,7 +25,7 @@ class Database {
   //drop tables if already exist, and create tables
   void initialize();
 
-  ~Database();
+  // ~Database();
 };
 
 #endif  //_QUERY_FUNCS_

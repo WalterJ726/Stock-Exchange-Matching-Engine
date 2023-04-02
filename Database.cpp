@@ -130,9 +130,9 @@ void Database::initialize() {
   createTables(this->c);
 }
 
-Database::~Database() {
-  if (this->c != NULL) {
-    c->disconnect();
-    delete this->c;
-  }
-}
+// Database::~Database() {
+//   if (this->c != NULL) {
+//     c->disconnect();
+//     delete this->c;
+//   }
+// }

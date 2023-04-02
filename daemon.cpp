@@ -11,7 +11,11 @@ int main()
     try
     {
         server_daemon = new Server(12345);
-        server_daemon->startRun(); 
+        if (server_daemon->getErrorSign()){
+            std::cout << "fail to initialize server" << std::endl;
+        }
+        server_daemon->startRun();
+
     }
     catch(const std::exception& e)
     {
