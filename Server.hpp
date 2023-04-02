@@ -50,6 +50,6 @@ public:
     // handle request
     static void handleRequest(const int& client_connection_fd, Database db);
     static pugi::xml_document process_create(const pugi::xml_document& doc, const int& client_connection_fd, Database db);
-    static pugi::xml_document process_transactions(const pugi::xml_document& doc, const int& client_connection_fd, Database db)
+    static pugi::xml_document process_transactions(const pugi::xml_document& doc, const int& client_connection_fd, Database db);
     // int connectToServer();
 };

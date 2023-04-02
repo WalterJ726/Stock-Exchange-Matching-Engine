@@ -131,23 +131,8 @@ void Database::initialize() {
 }
 
 bool Database::insert_account(const string& account_id, const size_t& balance){
-  string sql = "SELECT account_id FROM account WHERE account_id=" + account_id + ";";
-  std::cout << sql << std::endl;
-  try
-  {
-      nontransaction N(*c);
-      /* Execute SQL query */
-      result R( N.exec( sql ));
-      if (R.begin() != R.end()){
-        // account already exists
-        return false;
-      }
-      // add try block to destruct nontransaction
-  }
-  catch(const std::exception& e)
-  {
-    std::cerr << e.what() << '\n';
-  }
+    string sql;
+    if (find_account(account_id)) return false;
     
     sql = "INSERT INTO account (account_id, balance) ";
     sql += string("VALUES (");
@@ -211,6 +196,19 @@ bool Database::insert_sym(const string& account_id, const string& sym, const siz
     }
     return true;
 }
+
+bool Database::find_account(const string& account_id){
+  string sql = "SELECT account_id FROM account WHERE account_id=" + account_id + ";";
+  nontransaction N(*c);
+  /* Execute SQL query */
+  result R( N.exec( sql ));
+  if (R.begin() != R.end()){
+    // account already exists
+    return true;
+  }
+  return false;
+}
+
 // Database::~Database() {
 //   if (this->c != NULL) {
 //     c->disconnect();

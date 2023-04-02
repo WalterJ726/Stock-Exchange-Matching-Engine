@@ -16,7 +16,7 @@ int main()
     //         "   </symbol>"
     //         "</create>";
     
-    std::string filename = "testcase/test_create_error.xml";
+    std::string filename = "testcase/test.xml";
     std::ifstream xml_file(filename);
     std::string line, msg;
     if (!xml_file){

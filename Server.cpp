@@ -76,7 +76,7 @@ void Server::handleRequest(const int& client_connection_fd, Database db){
         response_raw = process_create(doc, client_connection_fd, db);
     } else if (root_name == "transactions"){
         std::cout << "start to process transactions" << std::endl;
-
+        response_raw = process_transactions(doc, client_connection_fd, db);
     } else {
         std::cout << "wrong xml" << std::endl;
     }
@@ -133,8 +133,32 @@ pugi::xml_document Server::process_create(const pugi::xml_document& doc, const i
   return response;
 }
 
-pugi::xml_document Server::proces_transactions(const pugi::xml_document& doc, const int& client_connection_fd, Database db){
-  
+pugi::xml_document Server::process_transactions(const pugi::xml_document& doc, const int& client_connection_fd, Database db){
+    pugi::xml_document response;
+    pugi::xml_node result_node = response.append_child("results");
+    pugi::xml_node root = doc.document_element();
+    std::string account_id = root.attribute("id").value();
+    if (!db.find_account(account_id)){
+        pugi::xml_node invalid_account = result_node.append_child("error");
+        invalid_account.append_attribute("id") = account_id.c_str();
+        invalid_account.append_child(pugi::node_pcdata).set_value("Account ID doesn't exist");
+        return response;
+    } else {
+        for (pugi::xml_node cur = root.first_child(); cur; cur = cur.next_sibling()){
+            if (std::string(cur.name()) == "query"){
+              std::cout << "start to query" << std::endl;
+            } else if (std::string(cur.name()) == "cancel"){
+              std::cout << "start to cancel" << std::endl;
+            } else if (std::string(cur.name()) == "order"){
+              std::cout << "start to order" << std::endl;
+            } else {
+                pugi::xml_node error_child = result_node.append_child("error");
+                error_child.append_child(pugi::node_pcdata).set_value("invalid child name");
+                std::cout << "bad child in transactions" << std::endl;
+            }
+        }
+      return response;
+    }
 }
 
 Server::Server(int port_num) : port_num(port_num) {
