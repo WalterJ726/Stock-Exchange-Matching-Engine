@@ -5,7 +5,6 @@
                "CONSTRAINT ACCOUNTPK PRIMARY KEY (\"account_id\"));";
 
 
-
   string sql = "CREATE TABLE \"position\" (\n"
                "\"symbol\"             VARCHAR(30)     NOT NULL ,\n"
                "\"amount\"             INT     NOT NULL,\n"

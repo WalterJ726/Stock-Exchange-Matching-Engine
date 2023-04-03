@@ -197,6 +197,86 @@ bool Database::insert_sym(const string& account_id, const string& sym, const siz
     return true;
 }
 
+bool Database::insert_order(const string& account_id, const string& sym, const int& amount, const double& limit, size_t& trans_id){
+    string sql;
+    try
+    {
+      // check order request is valid, like enough symbol amount and enough balance
+      sql = "SELECT balance,amount FROM account, position WHERE account_id=owner_id";
+      sql += " AND account_id=" + account_id;
+      sql += " AND symbol=" + c->quote(sym) + ";";
+      nontransaction N(*c);
+      /* Execute SQL query */
+      result R( N.exec( sql ));
+      // TODO: amount == 0
+      if (R.begin() == R.end()){
+          // check whether the client has the order
+          return false;
+      } else {
+        if (amount > 0){
+          // buy order: check enough balance
+          result::const_iterator c = R.begin();
+          double account_balance = c[0].as<double>();
+          if (account_balance < limit * amount){
+            return false;
+          }
+        } else {
+          // sell order: check enough symbol amount
+          result::const_iterator c = R.begin();
+          int symbol_amount = c[1].as<int>();
+          if (symbol_amount < amount){
+            return false;
+          }
+        }
+      }
+    }
+    catch(const std::exception& e)
+    {
+      std::cerr << e.what() << '\n';
+      std::cout << "fail to check open order is valid" << std::endl;
+    }
+    
+    try
+    {
+      // insert the order into database
+      sql = "INSERT INTO open (account_id, symbol, limit_value, amount) ";
+      sql += string("VALUES (");
+      sql += account_id + ",";
+      sql += c->quote(sym) + ",";
+      sql += std::to_string(limit) + ",";
+      sql += std::to_string(amount) + ",";
+      sql += string("); ");
+      executeSQL(c, sql);
+    }
+    catch(const std::exception& e)
+    {
+      std::cerr << e.what() << '\n';
+      std::cout << "fail to insert open order" << std::endl;
+    }
+
+    try
+    {
+      // get the transaction id from open table
+      sql = "SELECT trans_id FROM open WHERE";
+      sql += " account_id=" + account_id;
+      sql += " AND limit_value=" + std::to_string(limit);
+      sql += " AND amount=" + std::to_string(amount);
+      sql += " AND symbol=" + c->quote(sym) + ";";
+      nontransaction N(*c);
+      /* Execute SQL query */
+      result R( N.exec( sql ));
+      result::const_iterator c = R.begin();
+      trans_id = c[0].as<int>();
+      return true;
+    }
+    catch(const std::exception& e)
+    {
+      std::cerr << e.what() << '\n';
+      std::cout << "fail to get the transaction id" << std::endl;
+    }
+    return true; 
+}
+
 bool Database::find_account(const string& account_id){
   string sql = "SELECT account_id FROM account WHERE account_id=" + account_id + ";";
   nontransaction N(*c);

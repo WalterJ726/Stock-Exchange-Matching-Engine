@@ -131,6 +131,7 @@ pugi::xml_document Server::process_create(const pugi::xml_document& doc, const i
       }
   }
   return response;
+  // TODO: send response back
 }
 
 pugi::xml_document Server::process_transactions(const pugi::xml_document& doc, const int& client_connection_fd, Database db){
@@ -151,6 +152,28 @@ pugi::xml_document Server::process_transactions(const pugi::xml_document& doc, c
               std::cout << "start to cancel" << std::endl;
             } else if (std::string(cur.name()) == "order"){
               std::cout << "start to order" << std::endl;
+              // TODO: sym amount limit invalid (does not exist, name is wrong)
+              std::string sym = cur.attribute("sym").value();
+              std::string amount_raw = cur.attribute("amount").value();
+              int amount = std::stoi(amount_raw);
+              std::string limit_raw = cur.attribute("limit").value();
+              double limit = std::stod(limit_raw);
+              size_t trans_id;
+              if(db.insert_order(account_id, sym, amount, limit, trans_id)){
+                pugi::xml_node open_order_child = result_node.append_child("opened");
+                open_order_child.append_attribute("sym") = sym.c_str(); 
+                open_order_child.append_attribute("amount") = amount_raw.c_str(); 
+                open_order_child.append_attribute("limit") = limit_raw.c_str();
+                open_order_child.append_attribute("id") = std::to_string(trans_id).c_str();  
+              } else {
+                pugi::xml_node invalid_insert_child = result_node.append_child("error");
+                invalid_insert_child.append_attribute("sym") = sym.c_str();
+                invalid_insert_child.append_attribute("amount") = amount_raw.c_str();
+                invalid_insert_child.append_attribute("limit") = limit_raw.c_str();
+                invalid_insert_child.append_child(pugi::node_pcdata).set_value("Open order failed");
+              }
+
+              // execute an order
             } else {
                 pugi::xml_node error_child = result_node.append_child("error");
                 error_child.append_child(pugi::node_pcdata).set_value("invalid child name");

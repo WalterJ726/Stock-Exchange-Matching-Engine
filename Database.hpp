@@ -29,7 +29,7 @@ class Database {
   // insert value to database
   bool insert_account(const string& account_id, const size_t& balance);
   bool insert_sym(const string& account_id, const string& sym, const size_t& num);
-
+  bool insert_order(const string& account_id, const string& sym, const int& amount, const int& limit, size_t& trans_id);
 
   // query
   bool find_account(const string& account_id);
