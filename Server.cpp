@@ -55,7 +55,6 @@ void Server::handleRequest(const int& client_connection_fd, Database db){
         cur_bytes += len; 
     }
     
-
     // covert to xml, start to process
     std::string xml_str(buff.begin() + xml_len.size() + 1, buff.end());
     pugi::xml_document doc;

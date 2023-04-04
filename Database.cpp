@@ -100,9 +100,7 @@ void createExecuted(connection * c) {
                "\"symbol\"             VARCHAR(30)     NOT NULL ,\n"
                "\"seller_id\"             INT     NOT NULL ,\n"
                "\"buyer_id\"             INT     NOT NULL,\n"
-               "CONSTRAINT EXECTIDPK PRIMARY KEY (\"exect_id\"), \n"
-               "CONSTRAINT TRANSIDFK FOREIGN KEY (\"trans_id\") REFERENCES "
-               "\"open\"(\"trans_id\") ON DELETE SET NULL ON UPDATE CASCADE);";
+               "CONSTRAINT EXECTIDPK PRIMARY KEY (\"exect_id\"));";
   executeSQL(c, sql);
 }
 
@@ -113,9 +111,7 @@ void createCancelled(connection * c) {
                "\"amount\"            INT     NOT NULL ,\n"
                "\"time\"            INT     NOT NULL ,\n"
                "\"account_id\"             INT     NOT NULL ,\n"
-               "CONSTRAINT CANCELIDPK PRIMARY KEY (\"cancel_id\"), \n"
-               "CONSTRAINT TRANSIDFK FOREIGN KEY (\"trans_id\") REFERENCES "
-               "\"open\"(\"trans_id\") ON DELETE SET NULL ON UPDATE CASCADE);";
+               "CONSTRAINT CANCELIDPK PRIMARY KEY (\"cancel_id\"));";
   executeSQL(c, sql);
 }
 
@@ -322,7 +318,6 @@ void Database::executed_order(const string& account_id, const string& sym, const
         assert(sym == c[2].as<string>());
         int seller_amount = c[4].as<int>();
         if (buyer_amount == 0){
-          // TODO: erase the open order
           return;
         } else if (buyer_amount > abs(seller_amount)){
             buyer_amount -= abs(seller_amount);
@@ -343,7 +338,6 @@ void Database::executed_order(const string& account_id, const string& sym, const
         int buyer_limit = c[3].as<double>();
         int buyer_amount = c[4].as<int>();
         if (seller_amount == 0){
-          // erase the open order
           return;
         } else if (abs(seller_amount) > buyer_amount){
             std::cout << "executed all buyer_amount and seller amount: " << seller_amount << std::endl;
@@ -375,11 +369,16 @@ void Database::execute_single_open_order(const size_t& trans_id, const string& a
       // update seller and buyer's open order
       std::cout << "UPDATE VALUE IN POSITION" << std::endl;
       // update buyer
-      sql = "UPDATE open ";
-      sql += "SET ";
-      sql += "amount=" + std::to_string(buyer_amount);
-      sql += " WHERE trans_id=" + std::to_string(trans_id) + ";";
-      executeSQL(c, sql);
+      if (buyer_amount == 0){
+        // delete open order
+        delete_single_open_order(trans_id);
+      } else {
+        sql = "UPDATE open ";
+        sql += "SET ";
+        sql += "amount=" + std::to_string(buyer_amount);
+        sql += " WHERE trans_id=" + std::to_string(trans_id) + ";";
+        executeSQL(c, sql);
+      }
 
       sql = "UPDATE account ";
       sql += "SET ";
@@ -388,11 +387,17 @@ void Database::execute_single_open_order(const size_t& trans_id, const string& a
       executeSQL(c, sql);
 
       // update seller
-      sql = "UPDATE open ";
-      sql += "SET ";
-      sql += "amount=" + std::to_string(seller_amount);
-      sql += " WHERE trans_id=" + std::to_string(seller_trans_id) + ";";
-      executeSQL(c, sql);
+      if (seller_amount == 0){
+        // delete open order
+        delete_single_open_order(seller_trans_id);
+      } else {
+        sql = "UPDATE open ";
+        sql += "SET ";
+        sql += "amount=" + std::to_string(seller_amount);
+        sql += " WHERE trans_id=" + std::to_string(seller_trans_id) + ";";
+        executeSQL(c, sql);
+      }
+
       sql = "UPDATE account ";
       sql += "SET ";
       sql += "balance=balance+" + std::to_string(order_amount * order_limit);
@@ -438,6 +443,12 @@ void Database::execute_single_open_order(const size_t& trans_id, const string& a
     {
       std::cerr << e.what() << '\n';
     }
+}
+
+void Database::delete_single_open_order(const size_t& trans_id){
+  string sql;
+  sql = "DELETE FROM open WHERE trans_id=" + std::to_string(trans_id) + ";";
+  executeSQL(c, sql);
 }
 
 bool Database::find_account(const string& account_id){
