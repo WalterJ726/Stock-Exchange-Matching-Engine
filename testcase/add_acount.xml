@@ -1,0 +1,17 @@
+173
+<?xml version="1.0" encoding="UTF-8"?>
+<create>
+ <account id="1" balance="50000"/>
+ <account id="2" balance="50000"/>
+ <account id="3" balance="50000"/>
+ <account id="4" balance="50000"/>
+ <account id="5" balance="50000"/>
+ <account id="6" balance="50000"/>
+ <account id="7" balance="50000"/>
+ <symbol sym="SPY">
+    <account id="5">200</account>
+    <account id="2">100</account>
+    <account id="4">500</account>
+    <account id="7">400</account>
+ </symbol>
+</create> 

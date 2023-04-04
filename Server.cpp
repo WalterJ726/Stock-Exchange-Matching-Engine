@@ -174,6 +174,8 @@ pugi::xml_document Server::process_transactions(const pugi::xml_document& doc, c
               }
 
               // execute an order
+              db.executed_order(account_id, sym, amount, limit, trans_id);
+
             } else {
                 pugi::xml_node error_child = result_node.append_child("error");
                 error_child.append_child(pugi::node_pcdata).set_value("invalid child name");

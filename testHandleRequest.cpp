@@ -1,7 +1,7 @@
 #include "Server.hpp"
 #include "client.hpp"
 
-int main()
+int main(int argc, char** argv)
 {
     // browser -> proxy server: test httprequest & recv string
     // proxy server -> google.com: response(string)
@@ -16,7 +16,7 @@ int main()
     //         "   </symbol>"
     //         "</create>";
     
-    std::string filename = "testcase/test.xml";
+    std::string filename = argv[1];
     std::ifstream xml_file(filename);
     std::string line, msg;
     if (!xml_file){
