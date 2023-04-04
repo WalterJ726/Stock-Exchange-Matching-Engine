@@ -7,15 +7,6 @@ int main(int argc, char** argv)
     // proxy server -> google.com: response(string)
     Client client = Client(12345, "vcm-30576.vm.duke.edu");
 
-    // const char* msg = "173"
-    //         "<?xml version="1.0" encoding="UTF-8"?>"
-    //         "<create>"
-    //         "   <account id="123456" balance="1000"/>"
-    //         "   <symbol sym="SPY">"
-    //         "       <account id="123456">100000</account>"
-    //         "   </symbol>"
-    //         "</create>";
-    
     std::string filename = argv[1];
     std::ifstream xml_file(filename);
     std::string line, msg;
@@ -29,5 +20,9 @@ int main(int argc, char** argv)
     }
     std::cout << msg << std::endl;
     client.sendRequest(msg.c_str(), msg.size());
+
+
+    std::string response = client.recvResponse();
+    std::cout << response << std::endl;
     return 0;
 }

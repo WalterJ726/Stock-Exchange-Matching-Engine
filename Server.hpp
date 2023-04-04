@@ -43,7 +43,7 @@ public:
     int tryAccept();
     // send and recv data
     std::string recvData(int flag);
-    void sendData(void* data, size_t dataSize, int flag);
+    static bool sendAllData(int sockfd, const char *msg, size_t size);
     int getErrorSign();
 
 

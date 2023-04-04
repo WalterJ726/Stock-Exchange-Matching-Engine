@@ -82,11 +82,18 @@ void Server::handleRequest(const int& client_connection_fd, Database db){
     }
     // send reponse back
     response_raw.print(std::cout);
+    std::ostringstream oss;
+    response_raw.save(oss);
+    std::string response = oss.str();
+    sendAllData(client_connection_fd, response.c_str(), response.size());
     close(client_connection_fd);
 }
 
 pugi::xml_document Server::process_create(const pugi::xml_document& doc, const int& client_connection_fd, Database db){
     pugi::xml_document response;
+    pugi::xml_node decl = response.append_child(pugi::node_declaration);
+    decl.append_attribute("version") = "1.0";
+    decl.append_attribute("encoding") = "UTF-8";
     pugi::xml_node result_node = response.append_child("results");
     pugi::xml_node root = doc.document_element();
     for (pugi::xml_node cur = root.first_child(); cur; cur = cur.next_sibling()){
@@ -136,6 +143,9 @@ pugi::xml_document Server::process_create(const pugi::xml_document& doc, const i
 
 pugi::xml_document Server::process_transactions(const pugi::xml_document& doc, const int& client_connection_fd, Database db){
     pugi::xml_document response;
+    pugi::xml_node decl = response.append_child(pugi::node_declaration);
+    decl.append_attribute("version") = "1.0";
+    decl.append_attribute("encoding") = "UTF-8";
     pugi::xml_node result_node = response.append_child("results");
     pugi::xml_node root = doc.document_element();
     std::string account_id = root.attribute("id").value();
@@ -252,7 +262,6 @@ int Server::startListen(){
   return status;
 }
 
-
 int Server::tryAccept(){
     struct sockaddr_storage socket_addr;
     socklen_t socket_addr_len = sizeof(socket_addr);
@@ -279,12 +288,20 @@ std::string Server::recvData(int flag){
   return std::string(recvbuff, numbytes);
 }
 
-void Server::sendData(void* data, size_t dataSize, int flag){
-  int status;
-  status = send(client_connection_fd, data, dataSize, MSG_NOSIGNAL); 
-  if (status == -1){
-    hasError = 1;
+bool Server::sendAllData(int sockfd, const char *msg, size_t size){
+  size_t numBytes = 0;
+  size_t bytesleft = size;
+  int recvBytes = 0;
+  while ((numBytes < bytesleft))
+  {
+      if ((recvBytes = send(sockfd, msg + numBytes, size, MSG_NOSIGNAL)) == -1)
+      {
+          perror("client send");
+          break;
+      }
+      numBytes += recvBytes;
+      bytesleft -= recvBytes;
   }
+
+  return recvBytes == -1 ? false : true;
 }
-
-
