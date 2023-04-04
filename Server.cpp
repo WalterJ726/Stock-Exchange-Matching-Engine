@@ -157,8 +157,10 @@ pugi::xml_document Server::process_transactions(const pugi::xml_document& doc, c
         for (pugi::xml_node cur = root.first_child(); cur; cur = cur.next_sibling()){
             if (std::string(cur.name()) == "query"){
               std::cout << "start to query" << std::endl;
+
             } else if (std::string(cur.name()) == "cancel"){
               std::cout << "start to cancel" << std::endl;
+
             } else if (std::string(cur.name()) == "order"){
               std::cout << "start to order" << std::endl;
               // TODO: sym amount limit invalid (does not exist, name is wrong)
