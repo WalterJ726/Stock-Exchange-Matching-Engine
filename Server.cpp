@@ -147,6 +147,45 @@ pugi::xml_document Server::process_create(const pugi::xml_document & doc,
   // TODO: send response back
 }
 
+void set_invalid_trans_id_child(string & trans_id_raw, pugi::xml_node & status_node) {
+  pugi::xml_node invalid_trans_id_child = status_node.append_child("error");
+  invalid_trans_id_child.append_attribute("id") = trans_id_raw.c_str();
+  invalid_trans_id_child.append_child(pugi::node_pcdata)
+      .set_value("Given trans_id does not belong to the current account");
+}
+
+//set cancelld_child
+void set_cancelled_child(const int trans_id, Database db, pugi::xml_node & status_node) {
+  set<pair<int, int> > cancelled_set;
+  db.set_cancelled_result(trans_id, cancelled_set);
+  if (cancelled_set.size() != 0) {
+    for (set<pair<int, int> >::const_iterator it = cancelled_set.begin();
+         it != cancelled_set.end();
+         ++it) {
+      pugi::xml_node cancelled_child = status_node.append_child("canceled");
+      cancelled_child.append_attribute("shares") = std::to_string(it->first).c_str();
+      cancelled_child.append_attribute("times") = std::to_string(it->second).c_str();
+    }
+  }
+}
+
+//set executed_child
+void set_executed_child(const int trans_id, Database db, pugi::xml_node & status_node) {
+  set<pair<int, pair<double, int> > > executed_set;
+  db.set_executed_result(trans_id, executed_set);
+  if (executed_set.size() != 0) {
+    for (set<pair<int, pair<double, int> > >::const_iterator it = executed_set.begin();
+         it != executed_set.end();
+         ++it) {
+      pugi::xml_node executed_child = status_node.append_child("executed");
+      executed_child.append_attribute("shares") = std::to_string(it->first).c_str();
+      executed_child.append_attribute("price") = std::to_string(it->second.first).c_str();
+      executed_child.append_attribute("times") =
+          std::to_string(it->second.second).c_str();
+    }
+  }
+}
+
 pugi::xml_document Server::process_transactions(const pugi::xml_document & doc,
                                                 const int & client_connection_fd,
                                                 Database db) {
@@ -174,10 +213,7 @@ pugi::xml_document Server::process_transactions(const pugi::xml_document & doc,
         status_node.append_attribute("id") = trans_id_raw.c_str();
 
         if (!db.is_own_trans(trans_id, account_id_int)) {
-          pugi::xml_node invalid_trans_id_child = status_node.append_child("error");
-          invalid_trans_id_child.append_attribute("id") = trans_id_raw.c_str();
-          invalid_trans_id_child.append_child(pugi::node_pcdata)
-              .set_value("Given trans_id does not belong to the current account");
+          set_invalid_trans_id_child(trans_id_raw, status_node);
         }
         else {
           // for open
@@ -188,36 +224,9 @@ pugi::xml_document Server::process_transactions(const pugi::xml_document & doc,
             open_child.append_attribute("shares") = std::to_string(open_shares).c_str();
           }
           // for cancelled
-          set<pair<int, int> > cancelled_set;
-          db.set_cancelled_result(trans_id, cancelled_set);
-          if (cancelled_set.size() != 0) {
-            for (set<pair<int, int> >::const_iterator it = cancelled_set.begin();
-                 it != cancelled_set.end();
-                 ++it) {
-              pugi::xml_node cancelled_child = status_node.append_child("canceled");
-              cancelled_child.append_attribute("shares") =
-                  std::to_string(it->first).c_str();
-              cancelled_child.append_attribute("times") =
-                  std::to_string(it->second).c_str();
-            }
-          }
+          set_cancelled_child(trans_id, db, status_node);
           // for executed
-          set<pair<int, pair<double, int> > > executed_set;
-          db.set_executed_result(trans_id, executed_set);
-          if (executed_set.size() != 0) {
-            for (set<pair<int, pair<double, int> > >::const_iterator it =
-                     executed_set.begin();
-                 it != executed_set.end();
-                 ++it) {
-              pugi::xml_node executed_child = status_node.append_child("executed");
-              executed_child.append_attribute("shares") =
-                  std::to_string(it->first).c_str();
-              executed_child.append_attribute("price") =
-                  std::to_string(it->second.first).c_str();
-              executed_child.append_attribute("times") =
-                  std::to_string(it->second.second).c_str();
-            }
-          }
+          set_executed_child(trans_id, db, status_node);
         }
       }
       else if (std::string(cur.name()) == "cancel") {
@@ -229,44 +238,14 @@ pugi::xml_document Server::process_transactions(const pugi::xml_document & doc,
         canceled_node.append_attribute("id") = trans_id_raw.c_str();
 
         if (!db.is_own_trans(trans_id, account_id_int)) {
-          pugi::xml_node invalid_trans_id_child = canceled_node.append_child("error");
-          invalid_trans_id_child.append_attribute("id") = trans_id_raw.c_str();
-          invalid_trans_id_child.append_child(pugi::node_pcdata)
-              .set_value("Given trans_id does not belong to the current account");
+          set_invalid_trans_id_child(trans_id_raw, canceled_node);
         }
         else {
           db.cancel_transaction(trans_id);
           // for cancelled
-          set<pair<int, int> > cancelled_set;
-          db.set_cancelled_result(trans_id, cancelled_set);
-          if (cancelled_set.size() != 0) {
-            for (set<pair<int, int> >::const_iterator it = cancelled_set.begin();
-                 it != cancelled_set.end();
-                 ++it) {
-              pugi::xml_node cancelled_child = canceled_node.append_child("canceled");
-              cancelled_child.append_attribute("shares") =
-                  std::to_string(it->first).c_str();
-              cancelled_child.append_attribute("times") =
-                  std::to_string(it->second).c_str();
-            }
-          }
+          set_cancelled_child(trans_id, db, canceled_node);
           // for executed
-          set<pair<int, pair<double, int> > > executed_set;
-          db.set_executed_result(trans_id, executed_set);
-          if (executed_set.size() != 0) {
-            for (set<pair<int, pair<double, int> > >::const_iterator it =
-                     executed_set.begin();
-                 it != executed_set.end();
-                 ++it) {
-              pugi::xml_node executed_child = canceled_node.append_child("executed");
-              executed_child.append_attribute("shares") =
-                  std::to_string(it->first).c_str();
-              executed_child.append_attribute("price") =
-                  std::to_string(it->second.first).c_str();
-              executed_child.append_attribute("times") =
-                  std::to_string(it->second.second).c_str();
-            }
-          }
+          set_executed_child(trans_id, db, canceled_node);
         }
       }
       else if (std::string(cur.name()) == "order") {

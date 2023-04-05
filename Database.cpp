@@ -199,91 +199,90 @@ bool Database::insert_sym(const string & account_id,
   return true;
 }
 
-bool Database::insert_order(const string& account_id, const string& sym, const int& amount, const double& limit, size_t& trans_id){
-    string sql;
-    // check order request is valid, like enough symbol amount and enough balance
-    // TODO: amount == 0
-    if (amount > 0){
-      // buy order: check enough balance
-      std::cout << "check enough balance" << std::endl;
-      sql = "SELECT balance FROM account WHERE account_id=" + account_id + ";";
-      try
-      {
-        nontransaction N(*c);
-        /* Execute SQL query */
-        result R( N.exec( sql ));
-        result::const_iterator c = R.begin();
-        double account_balance = c[0].as<double>();
-        if (account_balance < limit * amount){
-          std::cout << "check enough balance" << std::endl;
-          return false;
-        }
+bool Database::insert_order(const string & account_id,
+                            const string & sym,
+                            const int & amount,
+                            const double & limit,
+                            size_t & trans_id) {
+  string sql;
+  // check order request is valid, like enough symbol amount and enough balance
+  // TODO: amount == 0
+  if (amount > 0) {
+    // buy order: check enough balance
+    std::cout << "check enough balance" << std::endl;
+    sql = "SELECT balance FROM account WHERE account_id=" + account_id + ";";
+    try {
+      nontransaction N(*c);
+      /* Execute SQL query */
+      result R(N.exec(sql));
+      result::const_iterator c = R.begin();
+      double account_balance = c[0].as<double>();
+      if (account_balance < limit * amount) {
+        std::cout << "check enough balance" << std::endl;
+        return false;
       }
-      catch(const std::exception& e)
-      {
-        std::cerr << e.what() << '\n';
-        std::cout << "fail to check open order is valid" << std::endl;
-      }
-      // deduct money from buyer account
-      sql = "UPDATE account ";
-      sql += "SET ";
-      sql += "balance=balance-" + std::to_string(amount * limit);
-      sql += " WHERE account_id=" + account_id + ";";
-      executeSQL(c, sql);
-    } else {
-      // sell order: check enough symbol amount and valid symbol
-      sql = "SELECT amount FROM account, position WHERE account_id=owner_id";
-      sql += " AND account_id=" + account_id;
-      sql += " AND symbol=" + c->quote(sym) + ";";
-
-      try
-      {
-        nontransaction N(*c);
-        /* Execute SQL query */
-        result R( N.exec( sql ));
-        if (R.begin() == R.end()){
-          // check whether the client has the order
-          std::cout << "client does not have the symbol" << std::endl;
-          return false;
-        }
-        result::const_iterator c = R.begin();
-        int symbol_amount = c[0].as<int>();
-        if (symbol_amount < abs(amount)){
-          std::cout << "check enough symbol amount" << std::endl;
-          return false;
-        }
-      }
-      catch(const std::exception& e)
-      {
-        std::cerr << e.what() << '\n';
-      }
-      // deducted shares from seller
-      sql = "UPDATE position ";
-      sql += "SET ";
-      sql += "amount=amount-" + std::to_string(abs(amount));
-      sql += " WHERE owner_id=" + account_id;
-      sql += " AND symbol=" + c->quote(sym) + ";";
-      executeSQL(c, sql);
     }
-
-    try
-    {
-      // insert the order into database
-      std::cout << "insert the order into database" << std::endl;
-      sql = "INSERT INTO open (account_id, symbol, limit_value, amount) ";
-      sql += string("VALUES (");
-      sql += account_id + ",";
-      sql += c->quote(sym) + ",";
-      sql += std::to_string(limit) + ",";
-      sql += std::to_string(amount);
-      sql += string("); ");
-      executeSQL(c, sql);
-    }
-    catch(const std::exception& e)
-    {
+    catch (const std::exception & e) {
       std::cerr << e.what() << '\n';
-      std::cout << "fail to insert open order" << std::endl;
+      std::cout << "fail to check open order is valid" << std::endl;
     }
+    // deduct money from buyer account
+    sql = "UPDATE account ";
+    sql += "SET ";
+    sql += "balance=balance-" + std::to_string(amount * limit);
+    sql += " WHERE account_id=" + account_id + ";";
+    executeSQL(c, sql);
+  }
+  else {
+    // sell order: check enough symbol amount and valid symbol
+    sql = "SELECT amount FROM account, position WHERE account_id=owner_id";
+    sql += " AND account_id=" + account_id;
+    sql += " AND symbol=" + c->quote(sym) + ";";
+
+    try {
+      nontransaction N(*c);
+      /* Execute SQL query */
+      result R(N.exec(sql));
+      if (R.begin() == R.end()) {
+        // check whether the client has the order
+        std::cout << "client does not have the symbol" << std::endl;
+        return false;
+      }
+      result::const_iterator c = R.begin();
+      int symbol_amount = c[0].as<int>();
+      if (symbol_amount < abs(amount)) {
+        std::cout << "check enough symbol amount" << std::endl;
+        return false;
+      }
+    }
+    catch (const std::exception & e) {
+      std::cerr << e.what() << '\n';
+    }
+    // deducted shares from seller
+    sql = "UPDATE position ";
+    sql += "SET ";
+    sql += "amount=amount-" + std::to_string(abs(amount));
+    sql += " WHERE owner_id=" + account_id;
+    sql += " AND symbol=" + c->quote(sym) + ";";
+    executeSQL(c, sql);
+  }
+
+  try {
+    // insert the order into database
+    std::cout << "insert the order into database" << std::endl;
+    sql = "INSERT INTO open (account_id, symbol, limit_value, amount) ";
+    sql += string("VALUES (");
+    sql += account_id + ",";
+    sql += c->quote(sym) + ",";
+    sql += std::to_string(limit) + ",";
+    sql += std::to_string(amount);
+    sql += string("); ");
+    executeSQL(c, sql);
+  }
+  catch (const std::exception & e) {
+    std::cerr << e.what() << '\n';
+    std::cout << "fail to insert open order" << std::endl;
+  }
 
   try {
     // get the transaction id from open table
@@ -369,13 +368,33 @@ void Database::executed_order(const string & account_id,
         int seller_amount = c[4].as<int>();
         if (buyer_amount == 0) {
           return;
-        } else if (buyer_amount > abs(seller_amount)){
-            buyer_amount -= abs(seller_amount);
-            execute_single_open_order(trans_id,account_id,buyer_amount,seller_trans_id,seller_account_id,0,sym,seller_amount,seller_limit,limit);
-        } else {
-            seller_amount += buyer_amount;
-            execute_single_open_order(trans_id,account_id,0,seller_trans_id,seller_account_id,seller_amount,sym,buyer_amount,seller_limit,limit);
-            buyer_amount = 0;
+        }
+        else if (buyer_amount > abs(seller_amount)) {
+          buyer_amount -= abs(seller_amount);
+          execute_single_open_order(trans_id,
+                                    account_id,
+                                    buyer_amount,
+                                    seller_trans_id,
+                                    seller_account_id,
+                                    0,
+                                    sym,
+                                    seller_amount,
+                                    seller_limit,
+                                    limit);
+        }
+        else {
+          seller_amount += buyer_amount;
+          execute_single_open_order(trans_id,
+                                    account_id,
+                                    0,
+                                    seller_trans_id,
+                                    seller_account_id,
+                                    seller_amount,
+                                    sym,
+                                    buyer_amount,
+                                    seller_limit,
+                                    limit);
+          buyer_amount = 0;
         }
       }
     }
@@ -390,15 +409,37 @@ void Database::executed_order(const string & account_id,
         int buyer_amount = c[4].as<int>();
         if (seller_amount == 0) {
           return;
-        } else if (abs(seller_amount) > buyer_amount){
-            std::cout << "executed all buyer_amount and seller amount: " << seller_amount << std::endl;
-            seller_amount += buyer_amount;
-            execute_single_open_order(buyer_trans_id,buyer_account_id,0,trans_id,account_id,seller_amount,sym,buyer_amount,buyer_limit,buyer_limit);
-        } else {
-            std::cout << "seller amount not enough and seller amount: " << seller_amount << std::endl;
-            buyer_amount -= abs(seller_amount);
-            execute_single_open_order(buyer_trans_id,buyer_account_id,buyer_amount,trans_id,account_id,0,sym,seller_amount,buyer_limit,buyer_limit);
-            seller_amount = 0;
+        }
+        else if (abs(seller_amount) > buyer_amount) {
+          std::cout << "executed all buyer_amount and seller amount: " << seller_amount
+                    << std::endl;
+          seller_amount += buyer_amount;
+          execute_single_open_order(buyer_trans_id,
+                                    buyer_account_id,
+                                    0,
+                                    trans_id,
+                                    account_id,
+                                    seller_amount,
+                                    sym,
+                                    buyer_amount,
+                                    buyer_limit,
+                                    buyer_limit);
+        }
+        else {
+          std::cout << "seller amount not enough and seller amount: " << seller_amount
+                    << std::endl;
+          buyer_amount -= abs(seller_amount);
+          execute_single_open_order(buyer_trans_id,
+                                    buyer_account_id,
+                                    buyer_amount,
+                                    trans_id,
+                                    account_id,
+                                    0,
+                                    sym,
+                                    seller_amount,
+                                    buyer_limit,
+                                    buyer_limit);
+          seller_amount = 0;
         }
       }
     }
@@ -408,31 +449,39 @@ void Database::executed_order(const string & account_id,
   }
 }
 
-void Database::execute_single_open_order(const size_t& trans_id, const string& account_id, const int& buyer_amount,\
-    const size_t& seller_trans_id, const string& seller_account_id, const int& seller_amount,\
-    const string& sym, const int& order_amount, const double& order_limit, const double& pre_limit){
-    string sql;
-    try
-    {
-      // update seller and buyer's open order
-      std::cout << "UPDATE VALUE IN POSITION" << std::endl;
-      // update buyer
-      if (buyer_amount == 0){
-        // delete open order
-        delete_single_open_order(trans_id);
-      } else {
-        sql = "UPDATE open ";
-        sql += "SET ";
-        sql += "amount=" + std::to_string(buyer_amount);
-        sql += " WHERE trans_id=" + std::to_string(trans_id) + ";";
-        executeSQL(c, sql);
-      }
-
-      sql = "UPDATE account ";
+void Database::execute_single_open_order(const size_t & trans_id,
+                                         const string & account_id,
+                                         const int & buyer_amount,
+                                         const size_t & seller_trans_id,
+                                         const string & seller_account_id,
+                                         const int & seller_amount,
+                                         const string & sym,
+                                         const int & order_amount,
+                                         const double & order_limit,
+                                         const double & pre_limit) {
+  string sql;
+  try {
+    // update seller and buyer's open order
+    std::cout << "UPDATE VALUE IN POSITION" << std::endl;
+    // update buyer
+    if (buyer_amount == 0) {
+      // delete open order
+      delete_single_open_order(trans_id);
+    }
+    else {
+      sql = "UPDATE open ";
       sql += "SET ";
-      sql += "balance=balance+" + std::to_string(order_amount * abs(order_limit-pre_limit));
-      sql += " WHERE account_id=" + account_id + ";";
+      sql += "amount=" + std::to_string(buyer_amount);
+      sql += " WHERE trans_id=" + std::to_string(trans_id) + ";";
       executeSQL(c, sql);
+    }
+
+    sql = "UPDATE account ";
+    sql += "SET ";
+    sql +=
+        "balance=balance+" + std::to_string(order_amount * abs(order_limit - pre_limit));
+    sql += " WHERE account_id=" + account_id + ";";
+    executeSQL(c, sql);
 
     // update seller
     if (seller_amount == 0) {
@@ -458,39 +507,37 @@ void Database::execute_single_open_order(const size_t& trans_id, const string& a
     std::cout << "fail to update" << std::endl;
   }
 
-    try
-    {
-      // insert order into executed table
-      // insert buyer
-      sql = "INSERT INTO executed (trans_id,amount,price,time,symbol,seller_id,buyer_id) ";
-      sql += string("VALUES (");
-      sql += std::to_string(trans_id) + ",";
-      sql += std::to_string(order_amount) + ",";
-      sql += std::to_string(order_limit) + ",";
-      sql += std::to_string((long)time(NULL)) + ",";
-      sql += c->quote(sym) + ",";
-      sql += seller_account_id + ",";
-      sql += account_id;
-      sql += string("); ");
-      executeSQL(c, sql);
+  try {
+    // insert order into executed table
+    // insert buyer
+    sql = "INSERT INTO executed (trans_id,amount,price,time,symbol,seller_id,buyer_id) ";
+    sql += string("VALUES (");
+    sql += std::to_string(trans_id) + ",";
+    sql += std::to_string(order_amount) + ",";
+    sql += std::to_string(order_limit) + ",";
+    sql += std::to_string((long)time(NULL)) + ",";
+    sql += c->quote(sym) + ",";
+    sql += seller_account_id + ",";
+    sql += account_id;
+    sql += string("); ");
+    executeSQL(c, sql);
 
-      // insert seller
-      sql = "INSERT INTO executed (trans_id,amount,price,time,symbol,seller_id,buyer_id) ";
-      sql += string("VALUES (");
-      sql += std::to_string(seller_trans_id) + ",";
-      sql += std::to_string(order_amount) + ",";
-      sql += std::to_string(order_limit) + ",";
-      sql += std::to_string((long)time(NULL)) + ",";
-      sql += c->quote(sym) + ",";
-      sql += seller_account_id + ",";
-      sql += account_id;
-      sql += string("); ");
-      executeSQL(c, sql);
-    }
-    catch(const std::exception& e)
-    {
-      std::cerr << e.what() << '\n';
-    }
+    // insert seller
+    sql = "INSERT INTO executed (trans_id,amount,price,time,symbol,seller_id,buyer_id) ";
+    sql += string("VALUES (");
+    sql += std::to_string(seller_trans_id) + ",";
+    sql += std::to_string(order_amount) + ",";
+    sql += std::to_string(order_limit) + ",";
+    sql += std::to_string((long)time(NULL)) + ",";
+    sql += c->quote(sym) + ",";
+    sql += seller_account_id + ",";
+    sql += account_id;
+    sql += string("); ");
+    executeSQL(c, sql);
+  }
+  catch (const std::exception & e) {
+    std::cerr << e.what() << '\n';
+  }
 }
 
 void Database::delete_single_open_order(const size_t & trans_id) {
@@ -511,9 +558,13 @@ bool Database::find_account(const string & account_id) {
   return false;
 }
 
-bool Database::is_own_trans(const int trans_id, const int account_id) {
+bool Database::has_trans(const int trans_id,
+                         const int account_id,
+                         const string & account_id_name,
+                         const string & table) {
   stringstream ss_sql;
-  ss_sql << "select trans_id from open where account_id = " << account_id << ";";
+  ss_sql << "select trans_id from " << table << " where " << account_id_name << " = "
+         << account_id << ";";
   result all_trans_id = executeSQL(c, ss_sql.str());
   for (result::const_iterator it = all_trans_id.begin(); it != all_trans_id.end(); ++it) {
     if (trans_id == it[0].as<int>()) {
@@ -521,6 +572,14 @@ bool Database::is_own_trans(const int trans_id, const int account_id) {
     }
   }
   return false;
+}
+
+bool Database::is_own_trans(const int trans_id, const int account_id) {
+  bool in_open = has_trans(trans_id, account_id, "account_id", "open");
+  bool in_cancelled = has_trans(trans_id, account_id, "account_id", "cancelled");
+  bool in_executed_seller = has_trans(trans_id, account_id, "seller_id", "executed");
+  bool in_executed_buyer = has_trans(trans_id, account_id, "buyer_id", "executed");
+  return in_open || in_cancelled || in_executed_seller || in_executed_buyer;
 }
 
 void Database::set_open_result(const int trans_id, int & shares) {
