@@ -36,6 +36,7 @@ connection * Database::connect() {
 result executeSQL(connection * c, const string & sql) {
   try {
     work w(*c);
+    w.exec("set transaction isolation level serializable");
     result r(w.exec(sql));
     w.commit();
     return r;
