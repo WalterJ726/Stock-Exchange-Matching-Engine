@@ -1,14 +1,14 @@
 #include "Server.hpp"
 #include "client.hpp"
 
-int main(int argc, char** argv)
-{
-    // browser -> proxy server: test httprequest & recv string
-    // proxy server -> google.com: response(string)
-    std::string port_raw = argv[2];
+int main(int argc, char ** argv) {
+  // browser -> proxy server: test httprequest & recv string
+  // proxy server -> google.com: response(string)
+  //    std::string port_raw = argv[2];
     size_t port_num = std::stoul(port_raw);
 
     Client client = Client(port_num, argv[1]);
+  Client client = Client(12345, "localhost");
 
     std::string filename = argv[3];
     std::ifstream xml_file(filename);
@@ -25,7 +25,7 @@ int main(int argc, char** argv)
     client.sendRequest(msg.c_str(), msg.size());
 
 
-    std::string response = client.recvResponse();
-    std::cout << response << std::endl;
-    return 0;
+  std::string response = client.recvResponse();
+  std::cout << response << std::endl;
+  return 0;
 }
