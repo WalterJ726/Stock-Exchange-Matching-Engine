@@ -4,11 +4,10 @@
 int main(int argc, char ** argv) {
   // browser -> proxy server: test httprequest & recv string
   // proxy server -> google.com: response(string)
-  //    std::string port_raw = argv[2];
+     std::string port_raw = argv[2];
     size_t port_num = std::stoul(port_raw);
 
     Client client = Client(port_num, argv[1]);
-  Client client = Client(12345, "localhost");
 
     std::string filename = argv[3];
     std::ifstream xml_file(filename);
