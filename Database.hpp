@@ -36,7 +36,7 @@ class Database {
   void executed_order(const string& account_id, const string& sym, const int& amount, const double& limit, const size_t& trans_id);
   void execute_single_open_order(const size_t& trans_id, const string& account_id, const int& buyer_amount,\
                                 const size_t& seller_trans_id, const string& seller_account_id, const int& seller_amount,\
-                                const string& sym, const int& order_amount, const double& order_limit);
+                                const string& sym, const int& order_amount, const double& order_limit, const double& pre_limit);
   // delete order
   void delete_single_open_order(const size_t& trans_id);
   

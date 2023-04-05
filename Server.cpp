@@ -148,53 +148,51 @@ pugi::xml_document Server::process_transactions(const pugi::xml_document& doc, c
     pugi::xml_node result_node = response.append_child("results");
     pugi::xml_node root = doc.document_element();
     std::string account_id = root.attribute("id").value();
-    if (!db.find_account(account_id)){
-        pugi::xml_node invalid_account = result_node.append_child("error");
-        invalid_account.append_attribute("id") = account_id.c_str();
-        invalid_account.append_child(pugi::node_pcdata).set_value("Account ID doesn't exist");
-        return response;
-    } else {
-        for (pugi::xml_node cur = root.first_child(); cur; cur = cur.next_sibling()){
-            if (std::string(cur.name()) == "query"){
-              std::cout << "start to query" << std::endl;
-
-            } else if (std::string(cur.name()) == "cancel"){
-              std::cout << "start to cancel" << std::endl;
-
-            } else if (std::string(cur.name()) == "order"){
-              std::cout << "start to order" << std::endl;
-              // TODO: sym amount limit invalid (does not exist, name is wrong)
-              std::string sym = cur.attribute("sym").value();
-              std::string amount_raw = cur.attribute("amount").value();
-              int amount = std::stoi(amount_raw);
-              std::string limit_raw = cur.attribute("limit").value();
-              double limit = std::stod(limit_raw);
-              size_t trans_id;
-              if(db.insert_order(account_id, sym, amount, limit, trans_id)){
-                pugi::xml_node open_order_child = result_node.append_child("opened");
-                open_order_child.append_attribute("sym") = sym.c_str(); 
-                open_order_child.append_attribute("amount") = amount_raw.c_str(); 
-                open_order_child.append_attribute("limit") = limit_raw.c_str();
-                open_order_child.append_attribute("id") = std::to_string(trans_id).c_str();  
-              } else {
-                pugi::xml_node invalid_insert_child = result_node.append_child("error");
-                invalid_insert_child.append_attribute("sym") = sym.c_str();
-                invalid_insert_child.append_attribute("amount") = amount_raw.c_str();
-                invalid_insert_child.append_attribute("limit") = limit_raw.c_str();
-                invalid_insert_child.append_child(pugi::node_pcdata).set_value("Open order failed");
-              }
-
-              // execute an order
-              db.executed_order(account_id, sym, amount, limit, trans_id);
-
-            } else {
-                pugi::xml_node error_child = result_node.append_child("error");
-                error_child.append_child(pugi::node_pcdata).set_value("invalid child name");
-                std::cout << "bad child in transactions" << std::endl;
-            }
+    bool isAccountValid = db.find_account(account_id);
+    for (pugi::xml_node cur = root.first_child(); cur; cur = cur.next_sibling()){
+        if (!isAccountValid){
+            pugi::xml_node invalid_account = result_node.append_child("error");
+            invalid_account.append_attribute("id") = account_id.c_str();
+            invalid_account.append_child(pugi::node_pcdata).set_value("Account ID doesn't exist");
+            continue;
         }
-      return response;
+        if (std::string(cur.name()) == "query"){
+          std::cout << "start to query" << std::endl;
+
+        } else if (std::string(cur.name()) == "cancel"){
+          std::cout << "start to cancel" << std::endl;
+
+        } else if (std::string(cur.name()) == "order"){
+          std::cout << "start to order" << std::endl;
+          // TODO: sym amount limit invalid (does not exist, name is wrong)
+          std::string sym = cur.attribute("sym").value();
+          std::string amount_raw = cur.attribute("amount").value();
+          int amount = std::stoi(amount_raw);
+          std::string limit_raw = cur.attribute("limit").value();
+          double limit = std::stod(limit_raw);
+          size_t trans_id;
+          if(db.insert_order(account_id, sym, amount, limit, trans_id)){
+            pugi::xml_node open_order_child = result_node.append_child("opened");
+            open_order_child.append_attribute("sym") = sym.c_str(); 
+            open_order_child.append_attribute("amount") = amount_raw.c_str(); 
+            open_order_child.append_attribute("limit") = limit_raw.c_str();
+            open_order_child.append_attribute("id") = std::to_string(trans_id).c_str();  
+          } else {
+            pugi::xml_node invalid_insert_child = result_node.append_child("error");
+            invalid_insert_child.append_attribute("sym") = sym.c_str();
+            invalid_insert_child.append_attribute("amount") = amount_raw.c_str();
+            invalid_insert_child.append_attribute("limit") = limit_raw.c_str();
+            invalid_insert_child.append_child(pugi::node_pcdata).set_value("Amount or balance invalid");
+          }
+          // execute an order
+          db.executed_order(account_id, sym, amount, limit, trans_id);
+        } else {
+            pugi::xml_node error_child = result_node.append_child("error");
+            error_child.append_child(pugi::node_pcdata).set_value("invalid child name");
+            std::cout << "bad child in transactions" << std::endl;
+        }
     }
+    return response;
 }
 
 Server::Server(int port_num) : port_num(port_num) {
