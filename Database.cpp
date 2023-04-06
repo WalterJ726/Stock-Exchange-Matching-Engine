@@ -337,14 +337,14 @@ void Database::executed_order(const string & account_id,
       sql = "SELECT trans_id,account_id,symbol,limit_value,amount FROM open WHERE";
       sql += " symbol=" + c->quote(sym);
       sql += " AND limit_value<=" + std::to_string(limit);
-      sql += " AND amount<=0;";
+      sql += " AND amount<=0 ORDER BY limit_value ASC;";
     }
     else {
       // sell order
       sql = "SELECT trans_id,account_id,symbol,limit_value,amount FROM open WHERE";
       sql += " symbol=" + c->quote(sym);
       sql += " AND limit_value>=" + std::to_string(limit);
-      sql += " AND amount>=0;";
+      sql += " AND amount>=0 ORDER BY limit_value DESC;";
     }
     nontransaction N(*c);
     /* Execute SQL query */
