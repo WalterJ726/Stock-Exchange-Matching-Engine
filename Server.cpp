@@ -90,19 +90,22 @@ void Server::handleRequest(const int & client_connection_fd) {
   db.disconnect();
 }
 
-void set_invalid_create_symbol_child(string & account_id_raw, string & sym, pugi::xml_node & status_node, const char* msg) {
-    pugi::xml_node invalid_symbol_child = status_node.append_child("error");
-    invalid_symbol_child.append_attribute("sym") = sym.c_str();
-    invalid_symbol_child.append_attribute("id") = account_id_raw.c_str();
-    invalid_symbol_child.append_child(pugi::node_pcdata)
-        .set_value(msg);
+void set_invalid_create_symbol_child(string & account_id_raw,
+                                     string & sym,
+                                     pugi::xml_node & status_node,
+                                     const char * msg) {
+  pugi::xml_node invalid_symbol_child = status_node.append_child("error");
+  invalid_symbol_child.append_attribute("sym") = sym.c_str();
+  invalid_symbol_child.append_attribute("id") = account_id_raw.c_str();
+  invalid_symbol_child.append_child(pugi::node_pcdata).set_value(msg);
 }
 
-void set_invalid_create_account_child(string & account_id_raw, pugi::xml_node & status_node, const char* msg) {
-    pugi::xml_node invalid_account_child = status_node.append_child("error");
-    invalid_account_child.append_attribute("id") = account_id_raw.c_str();
-    invalid_account_child.append_child(pugi::node_pcdata)
-        .set_value(msg);
+void set_invalid_create_account_child(string & account_id_raw,
+                                      pugi::xml_node & status_node,
+                                      const char * msg) {
+  pugi::xml_node invalid_account_child = status_node.append_child("error");
+  invalid_account_child.append_attribute("id") = account_id_raw.c_str();
+  invalid_account_child.append_child(pugi::node_pcdata).set_value(msg);
 }
 
 pugi::xml_document Server::process_create(const pugi::xml_document & doc,
@@ -121,17 +124,16 @@ pugi::xml_document Server::process_create(const pugi::xml_document & doc,
       std::cout << "start to process creating account" << std::endl;
       std::string account_id = cur.attribute("id").value();
       std::string balance_raw = cur.attribute("balance").value();
-      if (account_id == "" || balance_raw == ""){
-        set_invalid_create_account_child(account_id, result_node, "cannot get id or balance");
+      if (account_id == "" || balance_raw == "") {
+        set_invalid_create_account_child(
+            account_id, result_node, "cannot get id or balance");
         continue;
       }
       size_t balance;
-      try
-      {
+      try {
         balance = std::stoul(balance_raw);
       }
-      catch(const std::exception& e)
-      {
+      catch (const std::exception & e) {
         std::cerr << e.what() << '\n';
         hasError = true;
       }
@@ -140,7 +142,8 @@ pugi::xml_document Server::process_create(const pugi::xml_document & doc,
         created_account_child.append_attribute("id") = account_id.c_str();
       }
       else {
-        set_invalid_create_account_child(account_id, result_node, "Account already exists");
+        set_invalid_create_account_child(
+            account_id, result_node, "Account already exists");
       }
     }
     else if (std::string(cur.name()) == "symbol") {
@@ -150,27 +153,24 @@ pugi::xml_document Server::process_create(const pugi::xml_document & doc,
       std::string sym = cur.attribute("sym").value();
       bool hasError = false;
       pugi::xml_node invalid_symbol_child;
-      if (sym == ""){
+      if (sym == "") {
         hasError = true;
         invalid_symbol_child = result_node.append_child("error");
         invalid_symbol_child.append_attribute("sym") = sym.c_str();
-        invalid_symbol_child.append_child(pugi::node_pcdata)
-            .set_value("symbol invalid");
+        invalid_symbol_child.append_child(pugi::node_pcdata).set_value("symbol invalid");
       }
       for (pugi::xml_node sym_create = cur.first_child(); sym_create;
            sym_create = sym_create.next_sibling()) {
         std::string account_id = sym_create.attribute("id").value();
-        if (account_id == ""){
+        if (account_id == "") {
           hasError = true;
         }
         std::string num_raw = sym_create.child_value();
         size_t num;
-        try
-        {
+        try {
           num = std::stoul(num_raw);
         }
-        catch(const std::exception& e)
-        {
+        catch (const std::exception & e) {
           std::cerr << e.what() << '\n';
           hasError = true;
         }
@@ -181,7 +181,8 @@ pugi::xml_document Server::process_create(const pugi::xml_document & doc,
         }
         else {
           // TODO: Will this function produce error?
-          set_invalid_create_symbol_child(account_id,sym,invalid_symbol_child,"symbol create error");
+          set_invalid_create_symbol_child(
+              account_id, sym, invalid_symbol_child, "symbol create error");
           std::cout << "Will this function produce error" << std::endl;
         }
       }
@@ -197,7 +198,9 @@ pugi::xml_document Server::process_create(const pugi::xml_document & doc,
   // TODO: send response back
 }
 
-void set_invalid_trans_id_child(string & trans_id_raw, pugi::xml_node & status_node, const char* msg) {
+void set_invalid_trans_id_child(string & trans_id_raw,
+                                pugi::xml_node & status_node,
+                                const char * msg) {
   pugi::xml_node invalid_trans_id_child = status_node.append_child("error");
   invalid_trans_id_child.append_attribute("id") = trans_id_raw.c_str();
   invalid_trans_id_child.append_child(pugi::node_pcdata)
@@ -236,14 +239,16 @@ void set_executed_child(const int trans_id, Database db, pugi::xml_node & status
   }
 }
 
-
-void set_invalid_order_child(string & amount_raw, string& sym, string& limit_raw, pugi::xml_node & status_node, const char* msg) {
-    pugi::xml_node invalid_insert_child = status_node.append_child("error");
-    invalid_insert_child.append_attribute("sym") = sym.c_str();
-    invalid_insert_child.append_attribute("amount") = amount_raw.c_str();
-    invalid_insert_child.append_attribute("limit") = limit_raw.c_str();
-    invalid_insert_child.append_child(pugi::node_pcdata)
-        .set_value(msg);
+void set_invalid_order_child(string & amount_raw,
+                             string & sym,
+                             string & limit_raw,
+                             pugi::xml_node & status_node,
+                             const char * msg) {
+  pugi::xml_node invalid_insert_child = status_node.append_child("error");
+  invalid_insert_child.append_attribute("sym") = sym.c_str();
+  invalid_insert_child.append_attribute("amount") = amount_raw.c_str();
+  invalid_insert_child.append_attribute("limit") = limit_raw.c_str();
+  invalid_insert_child.append_child(pugi::node_pcdata).set_value(msg);
 }
 
 pugi::xml_document Server::process_transactions(const pugi::xml_document & doc,
@@ -258,137 +263,144 @@ pugi::xml_document Server::process_transactions(const pugi::xml_document & doc,
   std::string account_id = root.attribute("id").value();
   bool invalidAccount = !db.find_account(account_id);
   for (pugi::xml_node cur = root.first_child(); cur; cur = cur.next_sibling()) {
-      if (invalidAccount){
-        pugi::xml_node invalid_account = result_node.append_child("error");
-        invalid_account.append_attribute("id") = account_id.c_str();
-        invalid_account.append_child(pugi::node_pcdata).set_value("Account ID doesn't exist");
+    if (invalidAccount) {
+      pugi::xml_node invalid_account = result_node.append_child("error");
+      invalid_account.append_attribute("id") = account_id.c_str();
+      invalid_account.append_child(pugi::node_pcdata)
+          .set_value("Account ID doesn't exist");
+      continue;
+    }
+    if (std::string(cur.name()) == "query") {
+      std::cout << "start to query" << std::endl;
+      bool hasError = false;
+      std::string trans_id_raw = cur.attribute("id").value();
+      if (trans_id_raw == "") {
+        hasError = true;
+      }
+      int trans_id;
+      int account_id_int;
+      try {
+        trans_id = std::stoi(trans_id_raw);
+        account_id_int = std::stoi(account_id);
+      }
+      catch (const std::exception & e) {
+        std::cerr << e.what() << '\n';
+        hasError = true;
+      }
+      pugi::xml_node status_node = result_node.append_child("status");
+      status_node.append_attribute("id") = trans_id_raw.c_str();
+      if (hasError) {
+        set_invalid_trans_id_child(trans_id_raw, status_node, "query parse failed");
         continue;
       }
-      if (std::string(cur.name()) == "query") {
-        std::cout << "start to query" << std::endl;
-        bool hasError = false;
-        std::string trans_id_raw = cur.attribute("id").value();
-        if (trans_id_raw == ""){
-          hasError = true;
-        }
-        int trans_id;
-        int account_id_int;
-        try
-        {
-            trans_id = std::stoi(trans_id_raw);
-            account_id_int = std::stoi(account_id);
-        }
-        catch(const std::exception& e)
-        {
-          std::cerr << e.what() << '\n';
-          hasError = true;
-        }
-        pugi::xml_node status_node = result_node.append_child("status");
-        status_node.append_attribute("id") = trans_id_raw.c_str();
-        if (hasError){
-          set_invalid_trans_id_child(trans_id_raw, status_node, "query parse failed");
-          continue;
-        } else if (!db.is_own_trans(trans_id, account_id_int)) {
-          set_invalid_trans_id_child(trans_id_raw, status_node, "Given trans_id does not belong to the current account");
-          continue;
-        }
-        else {
-          // for open
-          int open_shares = 0;
-          db.set_open_result(trans_id, open_shares);
-          if (open_shares != 0) {
-            pugi::xml_node open_child = status_node.append_child("open");
-            open_child.append_attribute("shares") = std::to_string(open_shares).c_str();
-          }
-          // for cancelled
-          set_cancelled_child(trans_id, db, status_node);
-          // for executed
-          set_executed_child(trans_id, db, status_node);
-        }
-      }
-      else if (std::string(cur.name()) == "cancel") {
-        std::cout << "start to cancel" << std::endl;
-        bool hasError = false;
-        std::string trans_id_raw = cur.attribute("id").value();
-        if (trans_id_raw == ""){
-          hasError = true;
-        }
-        int trans_id;
-        int account_id_int;
-        try
-        {
-            trans_id = std::stoi(trans_id_raw);
-            account_id_int = std::stoi(account_id);
-        }
-        catch(const std::exception& e)
-        {
-          std::cerr << e.what() << '\n';
-          hasError = true;
-        }
-        pugi::xml_node canceled_node = result_node.append_child("canceled");
-        canceled_node.append_attribute("id") = trans_id_raw.c_str();
-
-        if (hasError){
-          set_invalid_trans_id_child(trans_id_raw, canceled_node, "cancel failed parse");
-          continue;
-        } else if (!db.is_own_trans(trans_id, account_id_int)) {
-          set_invalid_trans_id_child(trans_id_raw, canceled_node, "Given trans_id does not belong to the current account");
-          continue;
-        }
-        else {
-          db.cancel_transaction(trans_id);
-          // for cancelled
-          set_cancelled_child(trans_id, db, canceled_node);
-          // for executed
-          set_executed_child(trans_id, db, canceled_node);
-        }
-      }
-      else if (std::string(cur.name()) == "order") {
-        std::cout << "start to order" << std::endl;
-        bool hasError = false;
-        // TODO: sym amount limit invalid (does not exist, name is wrong)
-        std::string sym = cur.attribute("sym").value();
-        std::string amount_raw = cur.attribute("amount").value();
-        std::string limit_raw = cur.attribute("limit").value();
-        if (sym == "" || amount_raw == "" || limit_raw == ""){
-          hasError = true;
-        }
-        int amount;
-        double limit;
-        try
-        {
-          amount = std::stoi(amount_raw);
-          limit = std::stod(limit_raw);
-        }
-        catch(const std::exception& e)
-        {
-          std::cerr << e.what() << '\n';
-          hasError = true;
-        }
-        size_t trans_id;
-        if (hasError){
-          set_invalid_order_child(account_id, sym, limit_raw, result_node, "open order failed parse");
-          continue;
-        } else if (db.insert_order(account_id, sym, amount, limit, trans_id)) {
-          pugi::xml_node open_order_child = result_node.append_child("opened");
-          open_order_child.append_attribute("sym") = sym.c_str();
-          open_order_child.append_attribute("amount") = amount_raw.c_str();
-          open_order_child.append_attribute("limit") = limit_raw.c_str();
-          open_order_child.append_attribute("id") = std::to_string(trans_id).c_str();
-          // execute an order
-          db.executed_order(account_id, sym, amount, limit, trans_id);
-        } else {
-          set_invalid_order_child(account_id, sym, limit_raw, result_node, "open order failed creating");
-        }
+      else if (!db.is_own_trans(trans_id, account_id_int)) {
+        set_invalid_trans_id_child(
+            trans_id_raw,
+            status_node,
+            "Given trans_id does not belong to the current account");
+        continue;
       }
       else {
-        pugi::xml_node error_child = result_node.append_child("error");
-        error_child.append_child(pugi::node_pcdata).set_value("invalid child name");
-        std::cout << "bad child in transactions" << std::endl;
+        // for open
+        int open_shares = 0;
+        db.set_open_result(trans_id, open_shares);
+        if (open_shares != 0) {
+          pugi::xml_node open_child = status_node.append_child("open");
+          open_child.append_attribute("shares") = std::to_string(open_shares).c_str();
+        }
+        // for cancelled
+        set_cancelled_child(trans_id, db, status_node);
+        // for executed
+        set_executed_child(trans_id, db, status_node);
       }
+    }
+    else if (std::string(cur.name()) == "cancel") {
+      std::cout << "start to cancel" << std::endl;
+      bool hasError = false;
+      std::string trans_id_raw = cur.attribute("id").value();
+      if (trans_id_raw == "") {
+        hasError = true;
+      }
+      int trans_id;
+      int account_id_int;
+      try {
+        trans_id = std::stoi(trans_id_raw);
+        account_id_int = std::stoi(account_id);
+      }
+      catch (const std::exception & e) {
+        std::cerr << e.what() << '\n';
+        hasError = true;
+      }
+      pugi::xml_node canceled_node = result_node.append_child("canceled");
+      canceled_node.append_attribute("id") = trans_id_raw.c_str();
+
+      if (hasError) {
+        set_invalid_trans_id_child(trans_id_raw, canceled_node, "cancel failed parse");
+        continue;
+      }
+      else if (!db.is_own_trans(trans_id, account_id_int)) {
+        set_invalid_trans_id_child(
+            trans_id_raw,
+            canceled_node,
+            "Given trans_id does not belong to the current account");
+        continue;
+      }
+      else {
+        db.cancel_transaction(trans_id);
+        // for cancelled
+        set_cancelled_child(trans_id, db, canceled_node);
+        // for executed
+        set_executed_child(trans_id, db, canceled_node);
+      }
+    }
+    else if (std::string(cur.name()) == "order") {
+      std::cout << "start to order" << std::endl;
+      bool hasError = false;
+      // TODO: sym amount limit invalid (does not exist, name is wrong)
+      std::string sym = cur.attribute("sym").value();
+      std::string amount_raw = cur.attribute("amount").value();
+      std::string limit_raw = cur.attribute("limit").value();
+      if (sym == "" || amount_raw == "" || limit_raw == "") {
+        hasError = true;
+      }
+      int amount;
+      double limit;
+      try {
+        amount = std::stoi(amount_raw);
+        limit = std::stod(limit_raw);
+      }
+      catch (const std::exception & e) {
+        std::cerr << e.what() << '\n';
+        hasError = true;
+      }
+      size_t trans_id;
+      if (hasError) {
+        set_invalid_order_child(
+            account_id, sym, limit_raw, result_node, "open order failed parse");
+        continue;
+      }
+      else if (db.insert_order(account_id, sym, amount, limit, trans_id)) {
+        pugi::xml_node open_order_child = result_node.append_child("opened");
+        open_order_child.append_attribute("sym") = sym.c_str();
+        open_order_child.append_attribute("amount") = amount_raw.c_str();
+        open_order_child.append_attribute("limit") = limit_raw.c_str();
+        open_order_child.append_attribute("id") = std::to_string(trans_id).c_str();
+        // execute an order
+        db.executed_order(account_id, sym, amount, limit, trans_id);
+      }
+      else {
+        set_invalid_order_child(
+            account_id, sym, limit_raw, result_node, "open order failed creating");
+      }
+    }
+    else {
+      pugi::xml_node error_child = result_node.append_child("error");
+      error_child.append_child(pugi::node_pcdata).set_value("invalid child name");
+      std::cout << "bad child in transactions" << std::endl;
+    }
+  }
+  return response;
 }
-return response;
-                                                }
 
 Server::Server(int port_num) : port_num(port_num) {
   hasError = 0;
