@@ -33,14 +33,13 @@ void * handleRequest(void * arg) {
   return NULL;
 }
 
-int id = 0;
-
 int main(int argc, char ** argv) {
   srand((unsigned int)time(NULL));
 
   for (int i = 0; i < 1000; ++i) {
     pthread_t thread;
     int ret = pthread_create(&thread, NULL, handleRequest, NULL);
+    std::cout << "current i: " << i << std::endl;
     if (ret != 0) {
       std::cout << "pthread create error" << std::endl;
     }
