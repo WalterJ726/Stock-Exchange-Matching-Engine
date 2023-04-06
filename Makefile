@@ -7,8 +7,6 @@ all: $(PROGS)
 daemon: daemon.cpp Server.cpp Database.cpp
 	g++ -g $(CFLAGS) -o daemon daemon.cpp Server.cpp Database.cpp $(EXTRAFLAGS)
 
-
-
 ## DEBUG
 testHandleRequest: testHandleRequest.cpp client.cpp
 	g++ -g $(CFLAGS) -o testHandleRequest testHandleRequest.cpp client.cpp
