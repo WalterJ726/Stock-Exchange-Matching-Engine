@@ -1,4 +1,4 @@
-HOSTNAME=localhost
+HOSTNAME=127.0.0.1
 
 #./testHandleRequest $HOSTNAME 12345 testcase/add_acount.xml
 #./testHandleRequest $HOSTNAME 12345 testcase/transactions1.xml

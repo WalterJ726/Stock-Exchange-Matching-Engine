@@ -87,7 +87,7 @@ void Server::handleRequest(const int & client_connection_fd) {
   std::string response = oss.str();
   sendAllData(client_connection_fd, response.c_str(), response.size());
   close(client_connection_fd);
-  db.connect();
+  db.disconnect();
 }
 
 void set_invalid_create_symbol_child(string & account_id_raw, string & sym, pugi::xml_node & status_node, const char* msg) {
