@@ -80,6 +80,10 @@ class Database {
   void return_symbol(const int account_id, const string & symbol, const int amount);
   void cancel_transaction(const size_t trans_id);
   // ~Database();
+
+
+  // disconnect
+  void disconnect();
 };
 
 #endif  //_QUERY_FUNCS_

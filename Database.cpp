@@ -686,6 +686,14 @@ void Database::cancel_transaction(const size_t trans_id) {
   }
 }
 
+
+void Database::disconnect(){
+  if (this->c != NULL) {
+    c->disconnect();
+    delete this->c;
+  }
+}
+
 // Database::~Database() {
 //   if (this->c != NULL) {
 //     c->disconnect();
