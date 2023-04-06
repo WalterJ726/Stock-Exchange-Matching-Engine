@@ -48,7 +48,7 @@ class Server {
   int getErrorSign();
 
   // handle request
-  static void handleRequest(const int & client_connection_fd, Database db);
+  static void handleRequest(const int & client_connection_fd);
   static pugi::xml_document process_create(const pugi::xml_document & doc,
                                            const int & client_connection_fd,
                                            Database db);

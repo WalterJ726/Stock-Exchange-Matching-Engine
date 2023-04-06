@@ -8,3 +8,4 @@ HOSTNAME=vcm-30576.vm.duke.edu
 ./testHandleRequest $HOSTNAME 12345 testcase/transactions5.xml
 ./testHandleRequest $HOSTNAME 12345 testcase/transactions6.xml
 ./testHandleRequest $HOSTNAME 12345 testcase/transactions7.xml
+./testHandleRequest $HOSTNAME 12345 testcase/transactions_query1.xml
