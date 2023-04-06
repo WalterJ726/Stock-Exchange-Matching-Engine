@@ -26,7 +26,7 @@
 #define SERVER_PORT "12345"
 
 // change MAX_THREAD to increase or decrease the number of queries sent
-#define MAX_THREAD 100
+#define MAX_THREAD 1000
 #define BUFF_SIZE 10240
 int x = 0;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -60,7 +60,10 @@ void *handler(void *arg) {
   std::ostringstream oss;
   request.save(oss);
   std::string rrequest = oss.str();
-  client.sendRequest(rrequest.c_str(), rrequest.size());
+  std::string rrquest_size = std::to_string(rrequest.size());
+
+  std::string ans = rrquest_size + "\n" + rrequest;
+  client.sendRequest(ans.c_str(), ans.size());
 
   std::string response = client.recvResponse();
 }
