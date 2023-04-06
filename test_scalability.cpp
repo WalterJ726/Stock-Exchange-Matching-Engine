@@ -24,7 +24,7 @@
 
 /*   the host name and port number, for debugging only   */
 /*   may change if server executing in another machine   */
-#define SERVER_ADDR "vcm-30576.vm.duke.edu"
+#define SERVER_ADDR "127.0.0.1"
 #define SERVER_PORT "12345"
 
 // change MAX_THREAD to increase or decrease the number of queries sent
@@ -38,7 +38,7 @@ void * handler(void * arg) {
   std::string port_raw = "12345";
   size_t port_num = std::stoul(port_raw);
 
-  Client client = Client(port_num, "vcm-30576.vm.duke.edu");
+  Client client = Client(port_num, "127.0.0.1");
   std::stringstream ss;
 
   pugi::xml_document request;
@@ -65,6 +65,7 @@ void * handler(void * arg) {
   client.sendRequest(rrequest.c_str(), rrequest.size());
 
   std::string response = client.recvResponse();
+  return NULL;
 }
 
 int main(int argc, char ** argv) {
