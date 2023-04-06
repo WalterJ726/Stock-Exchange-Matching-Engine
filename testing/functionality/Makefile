@@ -1,12 +1,12 @@
 CFLAGS=-std=gnu++11 -pedantic -Wall -ggdb3
-PROGS=daemon
+PROGS=testHandleRequest
 OBJS=$(patsubst %,%.o,$(PROGS)) *.o
 EXTRAFLAGS=-lpqxx -lpq -pthread
 
 all: $(PROGS)
-daemon: daemon.cpp Server.cpp Database.cpp
-	g++ -g $(CFLAGS) -o daemon daemon.cpp Server.cpp Database.cpp $(EXTRAFLAGS)
-	
+testHandleRequest: testHandleRequest.cpp client.cpp
+	g++ -g $(CFLAGS) -o testHandleRequest testHandleRequest.cpp client.cpp
+
 .PHONY: clean
 clean:
 	rm -f *~ $(PROGS) $(OBJS)

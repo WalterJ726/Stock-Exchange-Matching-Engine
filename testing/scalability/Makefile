@@ -1,12 +1,14 @@
 CFLAGS=-std=gnu++11 -pedantic -Wall -ggdb3
-PROGS=daemon
+PROGS=testScalability #
 OBJS=$(patsubst %,%.o,$(PROGS)) *.o
 EXTRAFLAGS=-lpqxx -lpq -pthread
 
 all: $(PROGS)
-daemon: daemon.cpp Server.cpp Database.cpp
-	g++ -g $(CFLAGS) -o daemon daemon.cpp Server.cpp Database.cpp $(EXTRAFLAGS)
+## DEBUG
+testScalability: test_scalability.cpp client.cpp
+	g++ -g $(CFLAGS) -o testScalability test_scalability.cpp client.cpp -pthread
 	
+
 .PHONY: clean
 clean:
 	rm -f *~ $(PROGS) $(OBJS)

@@ -18,10 +18,9 @@
 #include <thread>
 #include <sched.h>
 
-#include "Server.hpp"
-#include "client.hpp"
-#include "pugixml/pugiconfig.hpp"
-#include "pugixml/pugixml.hpp"
+#include "../../client.hpp"
+#include "../../pugixml/pugiconfig.hpp"
+#include "../../pugixml/pugixml.hpp"
 
 /*   the host name and port number, for debugging only   */
 /*   may change if server executing in another machine   */
@@ -33,6 +32,7 @@
 #define BUFF_SIZE 10240
 int x = 0;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+using std::string;
 
 std::string produceXML(int id){
   pugi::xml_document request;

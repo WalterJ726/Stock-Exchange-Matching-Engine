@@ -1,5 +1,5 @@
-#include "Server.hpp"
-#include "client.hpp"
+#include "../../client.hpp"
+#include "../../Server.hpp"
 
 int main(int argc, char ** argv) {
   // browser -> proxy server: test httprequest & recv string
