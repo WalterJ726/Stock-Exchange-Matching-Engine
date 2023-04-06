@@ -16,6 +16,7 @@
 #include <sstream>
 #include <string>
 #include <thread>
+#include <sched.h>
 
 #include "Server.hpp"
 #include "client.hpp"
@@ -28,19 +29,12 @@
 #define SERVER_PORT "12345"
 
 // change MAX_THREAD to increase or decrease the number of queries sent
-#define MAX_THREAD 1000
+#define MAX_THREAD 100
 #define BUFF_SIZE 10240
 int x = 0;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
-// set up the client and start sending message to server
-void * handler(void * arg) {
-  std::string port_raw = "12345";
-  size_t port_num = std::stoul(port_raw);
-
-  Client client = Client(port_num, "127.0.0.1");
-  std::stringstream ss;
-
+std::string produceXML(int id){
   pugi::xml_document request;
   pugi::xml_node decl = request.append_child(pugi::node_declaration);
   decl.append_attribute("version") = "1.0";
@@ -63,23 +57,42 @@ void * handler(void * arg) {
   request.save(oss);
   std::string rrequest = oss.str();
   std::string rrquest_size = std::to_string(rrequest.size());
-
   std::string ans = rrquest_size + "\n" + rrequest;
-  client.sendRequest(ans.c_str(), ans.size());
+  return ans;
+}
 
-  std::string response = client.recvResponse();
+// set up the client and start sending message to server
+void * handler(void * arg) {
+  std::string port_raw = "12345";
+  size_t port_num = std::stoul(port_raw);
+  Client client = Client(port_num, "vcm-32237.vm.duke.edu");
+  std::string ans = *(std::string*)arg;
+  client.sendRequest(ans.c_str(), ans.size());
+  try
+  {
+    std::string response = client.recvResponse();
+  }
+  catch(const std::exception& e)
+  {
+    return NULL;
+  }
   return NULL;
 }
 
 int main(int argc, char ** argv) {
+  int cpu_num = sched_getcpu();
+  std::cout << "Current processor number: " << cpu_num << std::endl;
   int threads[MAX_THREAD];
   pthread_attr_t thread_attr[MAX_THREAD];
   pthread_t thread_ids[MAX_THREAD];
-  char * filename = argv[1];
+  std::vector<string> requests(MAX_THREAD);
+  for (int i = 0; i < MAX_THREAD; ++i){
+    requests[i] = produceXML(i);
+  }
+
   auto t1 = std::chrono::steady_clock::now();
   for (int i = 0; i < MAX_THREAD; ++i) {
-    threads[i] = pthread_create(&thread_ids[i], NULL, handler, filename);
-    usleep(1000);
+    threads[i] = pthread_create(&thread_ids[i], NULL, handler, &requests[i]);
   }
   for (int i = 0; i < MAX_THREAD; ++i) {
     pthread_join(thread_ids[i], NULL);

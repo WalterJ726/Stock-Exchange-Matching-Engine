@@ -115,7 +115,7 @@ std::string Client::recvResponse()
     int numBytes = 0;
     if ((numBytes = recv(sockfd, buf, sizeof(buf), 0)) == -1)
     {
-        perror("client recv");
+        // perror("client recv");
         throw std::exception();
     }
     // buf[numBytes] = '\0';
