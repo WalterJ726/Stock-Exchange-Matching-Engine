@@ -378,7 +378,7 @@ void Database::executed_order(const string & account_id,
                                     seller_account_id,
                                     0,
                                     sym,
-                                    seller_amount,
+                                    abs(seller_amount),
                                     seller_limit,
                                     limit);
         }
@@ -436,7 +436,7 @@ void Database::executed_order(const string & account_id,
                                     account_id,
                                     0,
                                     sym,
-                                    seller_amount,
+                                    abs(seller_amount),
                                     buyer_limit,
                                     buyer_limit);
           seller_amount = 0;
@@ -526,7 +526,7 @@ void Database::execute_single_open_order(const size_t & trans_id,
     sql = "INSERT INTO executed (trans_id,amount,price,time,symbol,seller_id,buyer_id) ";
     sql += string("VALUES (");
     sql += std::to_string(seller_trans_id) + ",";
-    sql += std::to_string(order_amount) + ",";
+    sql += std::to_string(-order_amount) + ",";
     sql += std::to_string(order_limit) + ",";
     sql += std::to_string((long)time(NULL)) + ",";
     sql += c->quote(sym) + ",";
@@ -562,16 +562,38 @@ bool Database::has_trans(const int trans_id,
                          const int account_id,
                          const string & account_id_name,
                          const string & table) {
-  stringstream ss_sql;
-  ss_sql << "select trans_id from " << table << " where " << account_id_name << " = "
-         << account_id << ";";
-  result all_trans_id = executeSQL(c, ss_sql.str());
-  for (result::const_iterator it = all_trans_id.begin(); it != all_trans_id.end(); ++it) {
-    if (trans_id == it[0].as<int>()) {
-      return true;
+  if (std::strcmp(table.c_str(), "executed") == 0) {
+    stringstream ss_sql_seller;
+    ss_sql_seller << "select trans_id, amount from executed where " << account_id_name
+                  << " = " << account_id << ";";
+    result trans_amout = executeSQL(c, ss_sql_seller.str());
+    for (result::const_iterator it = trans_amout.begin(); it != trans_amout.end(); ++it) {
+      if (std::strcmp(account_id_name.c_str(), "seller_id") == 0) {
+        if (trans_id == it[0].as<int>() && it[1].as<int>() < 0) {
+          return true;
+        }
+      }
+      if (std::strcoll(account_id_name.c_str(), "buyer_id") == 0) {
+        if (trans_id == it[0].as<int>() && it[1].as<int>() > 0) {
+          return true;
+        }
+      }
     }
+    return false;
   }
-  return false;
+  else {
+    stringstream ss_sql;
+    ss_sql << "select trans_id from " << table << " where " << account_id_name << " = "
+           << account_id << ";";
+    result all_trans_id = executeSQL(c, ss_sql.str());
+    for (result::const_iterator it = all_trans_id.begin(); it != all_trans_id.end();
+         ++it) {
+      if (trans_id == it[0].as<int>()) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
 
 bool Database::is_own_trans(const int trans_id, const int account_id) {
@@ -686,8 +708,7 @@ void Database::cancel_transaction(const size_t trans_id) {
   }
 }
 
-
-void Database::disconnect(){
+void Database::disconnect() {
   if (this->c != NULL) {
     c->disconnect();
     delete this->c;
