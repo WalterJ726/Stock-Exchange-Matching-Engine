@@ -76,6 +76,7 @@ int main(int argc, char ** argv) {
   pthread_attr_t thread_attr[MAX_THREAD];
   pthread_t thread_ids[MAX_THREAD];
   char * filename = argv[1];
+  auto t1 = std::chrono::steady_clock::now();
   for (int i = 0; i < MAX_THREAD; ++i) {
     threads[i] = pthread_create(&thread_ids[i], NULL, handler, filename);
     usleep(1000);
@@ -83,5 +84,9 @@ int main(int argc, char ** argv) {
   for (int i = 0; i < MAX_THREAD; ++i) {
     pthread_join(thread_ids[i], NULL);
   }
+
+  auto t2 = std::chrono::steady_clock::now();
+  double dr_s = std::chrono::duration<double>(t2 - t1).count();
+  std::cout << "run time: " << dr_s << " s" << std::endl;
   return 0;
 }
