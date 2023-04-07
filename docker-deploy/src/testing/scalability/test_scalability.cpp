@@ -29,7 +29,7 @@
 #define SERVER_PORT "12345"
 
 // change MAX_THREAD to increase or decrease the number of queries sent
-#define MAX_THREAD 1000
+#define MAX_THREAD 500
 #define BUFF_SIZE 10240
 int x = 0;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;

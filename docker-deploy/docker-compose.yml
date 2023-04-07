@@ -1,0 +1,24 @@
+version: '2'
+
+services:
+  db:
+    image: postgres
+    environment:
+      - POSTGRES_DB=exchange
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=passw0rd
+
+  serv:
+    build: ./src
+    user: root
+    command: bash -c "cd /code && chmod o+x run.sh && ./run.sh"
+    volumes:
+      - data-volume:/var/log/erss
+      - ./src:/code
+    ports:
+      - "12345:12345"
+    depends_on:
+      - db
+
+volumes:
+  data-volume:

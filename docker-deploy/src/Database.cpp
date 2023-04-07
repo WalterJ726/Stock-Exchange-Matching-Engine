@@ -13,7 +13,7 @@ Database::Database(const string & _dbname, const string & _user, const string _p
 connection * Database::connect() {
   connection * c = NULL;
   stringstream ss_connect;
-  ss_connect << "dbname=" << this->dbname << " user=" << this->user
+  ss_connect << "host=db port=5432 dbname=" << this->dbname << " user=" << this->user
              << " password=" << this->password;
   try {
     c = new connection(ss_connect.str());

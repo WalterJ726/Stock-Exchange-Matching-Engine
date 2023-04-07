@@ -192,7 +192,6 @@ pugi::xml_document Server::process_create(const pugi::xml_document & doc,
           // TODO: Will this function produce error?
           set_invalid_create_symbol_child(
               account_id, sym, invalid_symbol_child, "symbol create error");
-          std::cout << "Will this function produce error" << std::endl;
         }
       }
     }

@@ -1,0 +1,3 @@
+run test_client.sh to test the scalability of our code
+
+remember to change the hostname in Client Class

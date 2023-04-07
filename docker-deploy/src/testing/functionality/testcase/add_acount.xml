@@ -1,7 +1,7 @@
 173
 <?xml version="1.0" encoding="UTF-8"?>
 <create>
- <account id="1" balance="50000"/>
+ <account id="1" balance="-50000"/>
  <account id="2" balance="50000"/>
  <account id="3" balance="50000"/>
  <account id="4" balance="50000"/>
