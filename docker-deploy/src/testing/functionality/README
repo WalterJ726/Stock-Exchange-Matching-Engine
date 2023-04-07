@@ -1,1 +1,8 @@
-run test_correct.sh to test the functionality of our code
+Note: start the server before you run the test
+
+To test functionality:
+
+$ make
+$ sh test_correct.sh
+
+You may change the testing xml files in /testcase

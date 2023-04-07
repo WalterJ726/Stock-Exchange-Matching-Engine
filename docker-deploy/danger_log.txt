@@ -1,0 +1,20 @@
+03/28/2023
+1. The XML parser library we used assume that the given string contains a valid XML file with valid format. 
+    The server will work perfectly when client giving right requests.
+    However, if a client sends one request with invalid XML format, e.g. using <symbol my_sym="SPY"> rather than <symbol sym="SPY">, 
+    the server can not read the given symbol by looking for an attribute named "sym" and thus can not return the correct response to the client.
+
+03/31/2023
+1. Handled the error on 03/31. Now if the attribute name of one node is invalid, the server will send back a response with an error node.
+
+04/02/2023
+1. If a client with an valid account_id wants to query a transcation that does not belong to him/her, the server will execute the query 
+    and return the status of the transcation.
+
+04/03/2023
+1. Handled the error on 04/03 by checking whether the given trans_id is belong to the account_id. If it is not belong to the account_id, then return an error node.
+
+04/05/2023
+1. We assume that the given values sent by the client valid, e,g, balance = 5000. If the given balance = -5000, the database will report an error when trying to insert the value, 
+    and the server may not return the correct response. 
+2. If there are too many clients trying to connect to the server and perform request, e.g. over 900 clients, some client's connection to the server may be failed.

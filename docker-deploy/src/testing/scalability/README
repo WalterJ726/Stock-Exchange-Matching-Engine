@@ -1,3 +1,11 @@
-run test_client.sh to test the scalability of our code
 
 remember to change the hostname in Client Class
+
+Note: start the server before you run the test
+
+To test scalability:
+
+$ make
+$ sh test_client.sh
+
+You may change the testing xml files in /testcase
