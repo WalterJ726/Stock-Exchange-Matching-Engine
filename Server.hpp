@@ -12,6 +12,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <mutex>
 // #include <pthread.h>
 #include "Database.hpp"
 #include "pugixml/pugiconfig.hpp"
@@ -48,13 +49,13 @@ class Server {
   int getErrorSign();
 
   // handle request
-  static void handleRequest(const int & client_connection_fd);
+  static void* handleRequest(const int & client_connection_fd);
   static pugi::xml_document process_create(const pugi::xml_document & doc,
                                            const int & client_connection_fd,
                                            Database db);
   static pugi::xml_document process_transactions(const pugi::xml_document & doc,
                                                  const int & client_connection_fd,
                                                  Database db);
-
+  static std::vector<char> receiveXMLraw(const int& client_connection_fd);
   // int connectToServer();
 };

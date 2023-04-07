@@ -22,8 +22,6 @@ int main(int argc, char ** argv) {
     }
     std::cout << msg << std::endl;
     client.sendRequest(msg.c_str(), msg.size());
-
-
   std::string response = client.recvResponse();
   std::cout << response << std::endl;
   return 0;

@@ -1,4 +1,5 @@
 #include "Server.hpp"
+std::mutex mtx;
 
 void Server::startRun() {
   std::cout << "start Run server" << std::endl;
@@ -18,45 +19,51 @@ void Server::startRun() {
   }
 }
 
-void Server::handleRequest(const int & client_connection_fd) {
+
+std::vector<char> Server::receiveXMLraw(const int& client_connection_fd){
+  std::vector<char> buff(MAX_TCP_PACKET_SIZE);
+  int data_len = recv(client_connection_fd, &(buff.data()[0]), MAX_TCP_PACKET_SIZE, 0);
+  int index = data_len;
+  int total_len = 0;
+  try {
+    total_len =
+        stoi(string(buff.data()).substr(0, string(buff.data()).find('\n') + 1));
+  } catch (const std::exception &e) {
+    return {};
+  }
+
+  if (data_len >= MAX_TCP_PACKET_SIZE) {
+    while (data_len != 0) {
+      buff.resize(index + 1024);
+      data_len = recv(client_connection_fd, &(buff.data()[index]), 1024, 0);
+      index += data_len;
+      if (data_len < 1024 && data_len > 0) {
+        buff.resize(index);
+      }
+      if (data_len <= 0 || total_len <= index) {
+        break;
+      }
+      if (string(buff.begin(), buff.end()).find("</create>") != string::npos) {
+        break;
+      }
+      std::cout << buff.data() << std::endl;
+    }
+  }
+
+  while (isdigit(*buff.begin())) {
+    buff.erase(buff.begin());
+  }
+  buff.erase(buff.begin());
+  return buff;
+}
+
+void* Server::handleRequest(const int & client_connection_fd) {
   Database db("exchange", "postgres", "passw0rd");
   db.connect();
-  std::vector<char> buff(MAX_TCP_PACKET_SIZE);
-  // recv data
-  size_t numbytes = recv(client_connection_fd, &buff.data()[0], MAX_TCP_PACKET_SIZE, 0);
-  // get length of xml
-  std::string xml_len;
-  for (size_t i = 0; i < buff.size(); i++) {
-    if (buff[i] == '\n') {
-      break;
-    }
-    else {
-      xml_len += buff[i];
-    }
-  }
 
-  size_t xml_tot;
-  try {
-    xml_tot = std::stoul(xml_len, nullptr, 0);
-  }
-  catch (const std::exception & e) {
-    std::cerr << e.what() << '\n';
-    std::cout << "fail to convert number" << std::endl;
-  }
-
-  // continue to recv data
-  size_t cur_bytes = numbytes - xml_len.size() - 1;
-  size_t len = 0;
-  while (cur_bytes < xml_tot) {
-    buff.resize(buff.size() + 512);
-    if ((len = (recv(client_connection_fd, &buff.data()[buff.size()], 512, 0))) <= 0)
-      break;
-    buff.resize(buff.size() + len);
-    cur_bytes += len;
-  }
-
+  std::vector<char> buff_raw = receiveXMLraw(client_connection_fd);
   // covert to xml, start to process
-  std::string xml_str(buff.begin() + xml_len.size() + 1, buff.end());
+  std::string xml_str(buff_raw.begin(), buff_raw.end());
   pugi::xml_document doc;
   std::cout << xml_str << std::endl;
   // Load the XML string into the document object
@@ -88,6 +95,7 @@ void Server::handleRequest(const int & client_connection_fd) {
   sendAllData(client_connection_fd, response.c_str(), response.size());
   close(client_connection_fd);
   db.disconnect();
+  return nullptr;
 }
 
 void set_invalid_create_symbol_child(string & account_id_raw,
@@ -111,6 +119,7 @@ void set_invalid_create_account_child(string & account_id_raw,
 pugi::xml_document Server::process_create(const pugi::xml_document & doc,
                                           const int & client_connection_fd,
                                           Database db) {
+  std::lock_guard<std::mutex> lck (mtx);
   pugi::xml_document response;
   pugi::xml_node decl = response.append_child(pugi::node_declaration);
   decl.append_attribute("version") = "1.0";
@@ -131,7 +140,7 @@ pugi::xml_document Server::process_create(const pugi::xml_document & doc,
       }
       size_t balance;
       try {
-        balance = std::stoul(balance_raw);
+        balance = std::stod(balance_raw);
       }
       catch (const std::exception & e) {
         std::cerr << e.what() << '\n';
@@ -191,7 +200,6 @@ pugi::xml_document Server::process_create(const pugi::xml_document & doc,
       pugi::xml_node error_child = result_node.append_child("error");
       error_child.append_child(pugi::node_pcdata).set_value("invalid child name");
       std::cout << "bad child in create" << std::endl;
-      // throw std::exception();
     }
   }
   return response;
@@ -254,6 +262,7 @@ void set_invalid_order_child(string & amount_raw,
 pugi::xml_document Server::process_transactions(const pugi::xml_document & doc,
                                                 const int & client_connection_fd,
                                                 Database db) {
+  std::lock_guard<std::mutex> lck (mtx);
   pugi::xml_document response;
   pugi::xml_node decl = response.append_child(pugi::node_declaration);
   decl.append_attribute("version") = "1.0";

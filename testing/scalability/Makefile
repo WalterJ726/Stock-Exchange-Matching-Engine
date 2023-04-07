@@ -5,8 +5,8 @@ EXTRAFLAGS=-lpqxx -lpq -pthread
 
 all: $(PROGS)
 ## DEBUG
-testScalability: test_scalability.cpp client.cpp
-	g++ -g $(CFLAGS) -o testScalability test_scalability.cpp client.cpp -pthread
+testScalability: test_scalability.cpp client.cpp genXml.cpp
+	g++ -g $(CFLAGS) -o testScalability test_scalability.cpp client.cpp genXml.cpp -pthread
 	
 
 .PHONY: clean

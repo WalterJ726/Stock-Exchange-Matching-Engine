@@ -21,6 +21,7 @@
 #include "../../client.hpp"
 #include "../../pugixml/pugiconfig.hpp"
 #include "../../pugixml/pugixml.hpp"
+#include "genXml.hpp"
 
 /*   the host name and port number, for debugging only   */
 /*   may change if server executing in another machine   */
@@ -28,7 +29,7 @@
 #define SERVER_PORT "12345"
 
 // change MAX_THREAD to increase or decrease the number of queries sent
-#define MAX_THREAD 100
+#define MAX_THREAD 1000
 #define BUFF_SIZE 10240
 int x = 0;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -65,7 +66,7 @@ std::string produceXML(int id){
 void * handler(void * arg) {
   std::string port_raw = "12345";
   size_t port_num = std::stoul(port_raw);
-  Client client = Client(port_num, "vcm-32237.vm.duke.edu");
+  Client client = Client(port_num, "vcm-30576.vm.duke.edu");
   std::string ans = *(std::string*)arg;
   client.sendRequest(ans.c_str(), ans.size());
   try
@@ -86,9 +87,17 @@ int main(int argc, char ** argv) {
   pthread_attr_t thread_attr[MAX_THREAD];
   pthread_t thread_ids[MAX_THREAD];
   std::vector<string> requests(MAX_THREAD);
-  for (int i = 0; i < MAX_THREAD; ++i){
-    requests[i] = produceXML(i);
+  int x = rand() % MAX_THREAD;
+  genXml gg;
+  for (int i = 0; i < x; i ++ ){
+    requests[i] = gg.generateRandomCreateXml();
   }
+  for (int i = x; i < MAX_THREAD; i ++ ){
+    requests[i] = gg.generateRandomTransXml();
+  }
+  // for (int i = 0; i < MAX_THREAD; ++i){
+  //   requests[i] = produceXML(i);
+  // }
 
   auto t1 = std::chrono::steady_clock::now();
   for (int i = 0; i < MAX_THREAD; ++i) {
