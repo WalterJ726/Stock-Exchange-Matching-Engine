@@ -15,7 +15,7 @@ void Server::startRun() {
       std::cout << "accpet failed" << std::endl;
       continue;
     }
-    executor.commit(handleRequest, client_connection_fd).get();
+    executor.commit(handleRequest, client_connection_fd);
   }
 }
 
